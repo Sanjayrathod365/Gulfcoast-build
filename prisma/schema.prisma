@@ -1,0 +1,291 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  password      String?
+  name          String?
+  role          String        @default("STAFF")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  doctor        Doctor?
+  attorney      Attorney?
+  appointments  Appointment[]
+  assignedTasks Task[]        @relation("AssignedTo")
+  createdTasks  Task[]        @relation("CreatedBy")
+}
+
+model Doctor {
+  id          String   @id @default(cuid())
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+  prefix      String
+  name        String
+  phoneNumber String
+  faxNumber   String
+  email       String   @unique
+  clinicName  String
+  address     String
+  mapLink     String?
+  status      String   @default("Active")
+  hasLogin    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  referrals   Referral[]
+  patients    Patient[]
+}
+
+model Attorney {
+  id            String        @id @default(cuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id])
+  barNumber     String?       @unique
+  firm          String?
+  phone         String?
+  faxNumber     String?
+  address       String?
+  city          String?
+  state         String?
+  zipcode       String?
+  notes         String?
+  hasLogin      Boolean       @default(false)
+  caseManagers  CaseManager[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  cases         Case[]
+
+  @@map("attorneys")
+}
+
+model CaseManager {
+  id            String    @id @default(cuid())
+  attorneyId    String
+  attorney      Attorney  @relation(fields: [attorneyId], references: [id])
+  name          String
+  email         String
+  phone         String
+  phoneExt      String?
+  faxNumber     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Payer {
+  id        String   @id @default(cuid())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  patients  Patient[]
+}
+
+model Patient {
+  id              String        @id @default(cuid())
+  firstName       String
+  middleName      String?
+  lastName        String
+  dateOfBirth     DateTime
+  phone           String
+  altNumber       String?
+  email           String?
+  doidol          String?       // Date of Injury/Date of Loss
+  gender          String
+  address         String
+  city            String
+  zip             String
+  statusId        String        // Changed from status String to statusId String
+  status          Status        @relation(fields: [statusId], references: [id])
+  payerId         String
+  payer           Payer         @relation(fields: [payerId], references: [id])
+  lawyer          String?
+  orderDate       DateTime
+  orderFor        String
+  referringDoctorId String?
+  referringDoctor   Doctor?     @relation(fields: [referringDoctorId], references: [id])
+  procedures      Procedure[]
+  appointments    Appointment[]
+  referrals       Referral[]
+  cases           Case[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Facility {
+  id          String      @id @default(cuid())
+  name        String
+  address     String
+  city        String
+  state       String
+  zip         String
+  phone       String
+  fax         String?
+  email       String?
+  mapLink     String?
+  status      String      @default("active")
+  procedures  Procedure[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Physician {
+  id          String   @id @default(cuid())
+  prefix      String   // Dr., etc.
+  name        String
+  suffix      String?  // NP, FNP, etc.
+  phoneNumber String
+  email       String   @unique
+  npiNumber   String?  @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  procedures  Procedure[]
+}
+
+model Procedure {
+  id           String    @id @default(cuid())
+  patientId    String
+  patient      Patient   @relation(fields: [patientId], references: [id])
+  exam         String
+  scheduleDate DateTime
+  scheduleTime String
+  facilityId   String
+  facility     Facility  @relation(fields: [facilityId], references: [id])
+  physicianId  String
+  physician    Physician @relation(fields: [physicianId], references: [id])
+  statusId     String
+  status       Status    @relation(fields: [statusId], references: [id])
+  lop          String?   // Approved, Denied, null
+  isCompleted  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  date        DateTime
+  time        String
+  type        String
+  status      String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Referral {
+  id           String   @id @default(cuid())
+  doctorId     String
+  doctor       Doctor   @relation(fields: [doctorId], references: [id])
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id])
+  referralDate DateTime @default(now())
+  status       String
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Case {
+  id          String   @id @default(cuid())
+  attorneyId  String
+  attorney    Attorney @relation(fields: [attorneyId], references: [id])
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  caseNumber  String   @unique
+  status      String
+  filingDate  DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String
+  priority    String
+  dueDate     DateTime?
+  assignedTo  String
+  createdBy   String
+  assignedUser User     @relation("AssignedTo", fields: [assignedTo], references: [id])
+  creator     User      @relation("CreatedBy", fields: [createdBy], references: [id])
+  comments    Comment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Exam {
+  id          String    @id @default(cuid())
+  name        String
+  category    String    // Type of exam (e.g., Injection)
+  subExams    SubExam[]
+  status      String    @default("active")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SubExam {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id])
+  name        String   // Full name with CPT code
+  price       Float    // Price in dollars
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Status {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  color       String?
+  patients    Patient[]
+  procedures  Procedure[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  DOCTOR
+  ATTORNEY
+}
+
+enum CaseStatus {
+  OPEN
+  CLOSED
+  PENDING
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
