@@ -4,33 +4,41 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const patients = await prisma.patient.findMany({
       include: {
         status: true,
         payer: true,
-        referringDoctor: true,
-        procedures: true
+        procedures: {
+          include: {
+            status: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    return NextResponse.json(patients)
+    // Map the procedures to include exam name
+    const patientsWithExamNames = patients.map(patient => ({
+      ...patient,
+      procedures: patient.procedures.map(proc => ({
+        ...proc,
+        exam: proc.exam // This is already the exam name from the schema
+      }))
+    }))
+
+    return NextResponse.json(patientsWithExamNames)
   } catch (error) {
     console.error('Error fetching patients:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { message: 'Error fetching patients' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -66,7 +74,7 @@ export async function POST(request: Request) {
         referringDoctorId: data.referringDoctorId,
         procedures: {
           create: data.procedures.map((proc: any) => ({
-            exam: proc.exam,
+            exam: proc.examId,
             scheduleDate: proc.scheduleDate,
             scheduleTime: proc.scheduleTime,
             facilityId: proc.facilityId,
@@ -210,7 +218,11 @@ export async function PUT(request: Request) {
         status: true,
         payer: true,
         referringDoctor: true,
-        procedures: true
+        procedures: {
+          include: {
+            status: true
+          }
+        }
       },
     })
 

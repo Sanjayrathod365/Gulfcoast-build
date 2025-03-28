@@ -58,18 +58,20 @@ export async function PUT(
       address,
       city,
       zip,
-      status,
+      statusId,
       payerId,
       lawyer,
+      attorneyId,
       orderDate,
       orderFor,
       referringDoctorId,
+      procedures,
     } = body
 
     // Validate required fields
-    if (!firstName?.trim() || !lastName?.trim() || !payerId) {
+    if (!firstName?.trim() || !lastName?.trim() || !payerId || !statusId) {
       return NextResponse.json(
-        { message: 'First name, last name, and payer are required' },
+        { message: 'First name, last name, payer, and status are required' },
         { status: 400 }
       )
     }
@@ -82,12 +84,14 @@ export async function PUT(
       phone: phone?.trim() || '',
       altNumber: altNumber?.trim() || '',
       email: email?.trim() || '',
-      doidol: doidol?.trim() || null,
+      doidol: doidol ? doidol : null,
       gender: gender || 'unknown',
       address: address?.trim() || '',
       city: city?.trim() || '',
       zip: zip?.trim() || '',
-      status: status || 'active',
+      status: {
+        connect: { id: statusId }
+      },
       payer: {
         connect: { id: payerId }
       },
@@ -113,21 +117,104 @@ export async function PUT(
       }
     }
 
-    const patient = await prisma.patient.update({
-      where: { id },
-      data: updateData,
-      include: {
-        procedures: true,
-        referringDoctor: true,
-        payer: true,
-      },
+    // Start a transaction to update patient and procedures
+    const patient = await prisma.$transaction(async (tx) => {
+      try {
+        // Update patient
+        const updatedPatient = await tx.patient.update({
+          where: { id },
+          data: updateData,
+          include: {
+            procedures: true,
+            referringDoctor: true,
+            payer: true,
+          },
+        })
+
+        // Handle attorney relationship through Case model
+        if (attorneyId) {
+          // Check if a case already exists
+          const existingCase = await tx.case.findFirst({
+            where: { patientId: id }
+          })
+
+          if (existingCase) {
+            // Update existing case
+            await tx.case.update({
+              where: { id: existingCase.id },
+              data: {
+                attorney: {
+                  connect: { id: attorneyId }
+                }
+              }
+            })
+          } else {
+            // Create new case
+            await tx.case.create({
+              data: {
+                patient: {
+                  connect: { id }
+                },
+                attorney: {
+                  connect: { id: attorneyId }
+                },
+                caseNumber: `CASE-${Date.now()}`, // Generate a temporary case number
+                status: 'active',
+                filingDate: new Date()
+              }
+            })
+          }
+        }
+
+        // Handle procedures if provided
+        if (procedures && procedures.length > 0) {
+          // Delete existing procedures
+          await tx.procedure.deleteMany({
+            where: { patientId: id }
+          })
+
+          // Create new procedures
+          for (const proc of procedures) {
+            await tx.procedure.create({
+              data: {
+                patientId: id,
+                exam: proc.examId, // Store the exam name directly
+                scheduleDate: new Date(proc.scheduleDate),
+                scheduleTime: proc.scheduleTime,
+                facilityId: proc.facilityId,
+                physicianId: proc.physicianId,
+                statusId: proc.statusId,
+                lop: proc.lop || null,
+                isCompleted: proc.isCompleted || false
+              }
+            })
+          }
+        }
+
+        return updatedPatient
+      } catch (error) {
+        console.error('Transaction error:', error)
+        throw error
+      }
     })
 
     return NextResponse.json(patient)
   } catch (error) {
     console.error('Error updating patient:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { message: `Database error: ${error.message}` },
+        { status: 400 }
+      )
+    }
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      return NextResponse.json(
+        { message: `Validation error: ${error.message}` },
+        { status: 400 }
+      )
+    }
     return NextResponse.json(
-      { message: 'Error updating patient' },
+      { message: 'Error updating patient. Please try again.' },
       { status: 500 }
     )
   } finally {
