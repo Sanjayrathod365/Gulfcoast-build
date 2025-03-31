@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { doctorSchema } from '@/lib/validations'
+import { sendApiResponse, handleApiError } from '@/lib/api-utils'
+import bcrypt from 'bcryptjs'
 
 export async function GET(
   request: Request,
@@ -11,19 +14,13 @@ export async function GET(
     })
 
     if (!doctor) {
-      return NextResponse.json(
-        { error: 'Doctor not found' },
-        { status: 404 }
-      )
+      return sendApiResponse(undefined, 'Doctor not found', 404)
     }
 
-    return NextResponse.json(doctor)
+    return sendApiResponse(doctor)
   } catch (error) {
     console.error('Error fetching doctor:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch doctor' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
@@ -33,25 +30,48 @@ export async function PUT(
 ) {
   try {
     const data = await request.json()
+    const { id, password, ...updateData } = data
+
+    // Validate update data
+    const validation = doctorSchema.partial().safeParse(updateData)
+    if (!validation.success) {
+      return sendApiResponse(undefined, validation.error.message, 400)
+    }
+
+    // If hasLogin is true and password is provided, create a user account
+    if (updateData.hasLogin && password) {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10)
+
+      // Create or update the user account
+      await prisma.user.upsert({
+        where: { email: updateData.email },
+        create: {
+          email: updateData.email,
+          name: updateData.name,
+          password: hashedPassword,
+          role: 'DOCTOR'
+        },
+        update: {
+          password: hashedPassword,
+          name: updateData.name
+        }
+      })
+    } else if (!updateData.hasLogin) {
+      // If hasLogin is false, delete the user account if it exists
+      await prisma.user.deleteMany({
+        where: { email: updateData.email }
+      })
+    }
+
     const doctor = await prisma.doctor.update({
       where: { id: params.id },
-      data: {
-        prefix: data.prefix,
-        name: data.name,
-        phoneNumber: data.phoneNumber,
-        faxNumber: data.faxNumber,
-        email: data.email,
-        clinicName: data.clinicName,
-        address: data.address,
-        mapLink: data.mapLink,
-      },
+      data: validation.data
     })
-    return NextResponse.json(doctor)
+
+    return sendApiResponse(doctor)
   } catch (error) {
     console.error('Error updating doctor:', error)
-    return NextResponse.json(
-      { error: 'Failed to update doctor' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 } 

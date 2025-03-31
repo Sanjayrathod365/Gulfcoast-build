@@ -1,70 +1,73 @@
-import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
-const prisma = new PrismaClient()
+type AppointmentInput = {
+  patientId: string
+  date: Date
+  time: string
+  type: string
+  status?: string
+  notes?: string | null
+}
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     const patientId = searchParams.get('patientId')
-    const userId = searchParams.get('userId')
 
-    // Build where clause
-    const where: any = {
-      AND: [
-        startDate ? { date: { gte: new Date(startDate) } } : {},
-        endDate ? { date: { lte: new Date(endDate) } } : {},
-        patientId ? { patientId } : {},
-        userId ? { userId } : {},
-      ],
+    const where: Record<string, any> = {}
+
+    if (startDate && endDate) {
+      where.date = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      }
     }
 
-    // Get paginated and sorted results
+    if (patientId) {
+      where.patientId = patientId
+    }
+
     const appointments = await prisma.appointment.findMany({
       where,
       include: {
         patient: true,
-        user: true,
       },
       orderBy: {
         date: 'asc',
       },
-      skip: 0,
-      take: 10,
     })
 
     return NextResponse.json(appointments)
   } catch (error) {
     console.error('Error fetching appointments:', error)
     return NextResponse.json(
-      { message: 'Error fetching appointments' },
+      { error: 'Failed to fetch appointments' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { userId, patientId, date, time, type, status, notes } = body
+    const data = await request.json()
+    const { patientId, date, time, type, status = 'scheduled', notes } = data
+
+    const appointmentData = {
+      patientId,
+      date: new Date(date),
+      time,
+      type,
+      status,
+      notes,
+    } satisfies AppointmentInput
 
     const appointment = await prisma.appointment.create({
-      data: {
-        userId,
-        patientId,
-        date: new Date(date),
-        time,
-        type,
-        status,
-        notes,
-      },
+      data: appointmentData,
       include: {
         patient: true,
-        user: true,
       },
     })
 
@@ -72,41 +75,31 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating appointment:', error)
     return NextResponse.json(
-      { message: 'Error creating appointment' },
+      { error: 'Failed to create appointment' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const data = await request.json()
+    const { id, patientId, date, time, type, status, notes } = data
 
-    if (!id) {
-      return NextResponse.json(
-        { message: 'Appointment ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const body = await request.json()
-    const { date, time, type, status, notes } = body
+    const appointmentData = {
+      patientId,
+      date: date ? new Date(date) : undefined,
+      time,
+      type,
+      status,
+      notes,
+    } satisfies Partial<AppointmentInput>
 
     const appointment = await prisma.appointment.update({
       where: { id },
-      data: {
-        date: new Date(date),
-        time,
-        type,
-        status,
-        notes,
-      },
+      data: appointmentData,
       include: {
         patient: true,
-        user: true,
       },
     })
 
@@ -114,25 +107,16 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error('Error updating appointment:', error)
     return NextResponse.json(
-      { message: 'Error updating appointment' },
+      { error: 'Failed to update appointment' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-
-    if (!id) {
-      return NextResponse.json(
-        { message: 'Appointment ID is required' },
-        { status: 400 }
-      )
-    }
+    const data = await request.json()
+    const { id } = data
 
     await prisma.appointment.delete({
       where: { id },
@@ -142,10 +126,8 @@ export async function DELETE(request: Request) {
   } catch (error) {
     console.error('Error deleting appointment:', error)
     return NextResponse.json(
-      { message: 'Error deleting appointment' },
+      { error: 'Failed to delete appointment' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 } 

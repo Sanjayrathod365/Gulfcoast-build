@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,6 +11,31 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if we're fetching a single status
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (id) {
+      const status = await prisma.status.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          color: true
+        }
+      })
+
+      if (!status) {
+        return NextResponse.json(
+          { error: 'Status not found' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json(status)
+    }
+
+    // If no ID provided, fetch all statuses
     const statuses = await prisma.status.findMany({
       select: {
         id: true,
@@ -139,7 +164,6 @@ export async function PATCH(request: Request) {
               where: { id },
               data: {
                 name: data.name?.trim(),
-                description: data.description?.trim() || '',
                 color: data.color?.trim()
               }
             })

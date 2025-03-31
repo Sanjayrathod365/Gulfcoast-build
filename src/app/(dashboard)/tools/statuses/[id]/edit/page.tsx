@@ -7,15 +7,11 @@ import { use } from 'react'
 interface Status {
   id: string
   name: string
-  description: string | null
-  color: string | null
-  createdAt: string
-  updatedAt: string
+  color: string
 }
 
 interface FormData {
   name: string
-  description: string
   color: string
 }
 
@@ -26,7 +22,6 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
   const [error, setError] = useState('')
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    description: '',
     color: '#6B7280' // Default gray color
   })
 
@@ -43,7 +38,6 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
       const data = await response.json()
       setFormData({
         name: data.name,
-        description: data.description || '',
         color: data.color || '#6B7280'
       })
     } catch (err) {
@@ -53,7 +47,7 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
@@ -67,12 +61,15 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
     setError('')
 
     try {
-      const response = await fetch(`/api/statuses?id=${resolvedParams.id}`, {
+      const response = await fetch(`/api/statuses`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: resolvedParams.id,
+          ...formData
+        }),
       })
 
       if (!response.ok) {
@@ -118,20 +115,6 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
               name="name"
               required
               value={formData.name}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              value={formData.description}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />

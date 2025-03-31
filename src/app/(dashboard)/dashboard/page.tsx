@@ -1,59 +1,67 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-
-interface User {
-  userId: string
-  email: string
-  name: string
-  role: string
-}
+import { useSession } from 'next-auth/react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: session, status } = useSession()
   const router = useRouter()
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data')
-        }
-
-        const userData = await response.json()
-        setUser(userData)
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-        router.push('/login')
-      } finally {
-        setLoading(false)
-      }
+    if (status === 'unauthenticated') {
+      router.push('/login')
     }
+  }, [status, router])
 
-    fetchUserData()
-  }, [router])
-
-  if (loading) {
-    return <div className="text-center">Loading...</div>
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
-  if (!user) {
+  if (!session) {
     return null
   }
 
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
-        <h2 className="text-2xl font-bold text-gray-900">Welcome, {user.name}!</h2>
-        <p className="mt-4 text-gray-600">
-          You are logged in as a {user.role.toLowerCase()}.
-        </p>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-8">Welcome, {session.user?.name}</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Patients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">0</p>
+            <p className="text-sm text-gray-500">Total patients</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Appointments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">0</p>
+            <p className="text-sm text-gray-500">Today's appointments</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Cases</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">0</p>
+            <p className="text-sm text-gray-500">Active cases</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

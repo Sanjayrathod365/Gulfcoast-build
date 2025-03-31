@@ -9,11 +9,10 @@ export default function AddStatusPage() {
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     color: '#6B7280' // Default gray color
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
@@ -70,20 +69,6 @@ export default function AddStatusPage() {
               name="name"
               required
               value={formData.name}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              value={formData.description}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />

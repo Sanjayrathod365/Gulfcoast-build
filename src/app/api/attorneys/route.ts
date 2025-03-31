@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient, Prisma, Attorney, User, CaseManager } from '@prisma/client'
+import { Prisma, Attorney, User, CaseManager } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { hasPermission } from '@/utils/auth'
 import { prisma } from '@/lib/prisma'
 import { hash } from 'bcryptjs'
 import { jwtVerify } from 'jose'
 import { JwtPayload } from 'jsonwebtoken'
-
-const prismaClient = new PrismaClient()
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 interface CaseManagerData {
   name: string
@@ -30,6 +30,11 @@ type AttorneyUpdateData = {
 // GET /api/attorneys - Get all attorneys or a single attorney by ID
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

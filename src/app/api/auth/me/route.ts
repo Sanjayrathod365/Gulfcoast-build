@@ -1,24 +1,20 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { jwtVerify } from 'jose'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function GET(request: Request) {
   try {
-    const cookieHeader = request.headers.get('cookie')
-    const token = cookieHeader?.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
+    const session = await getServerSession(authOptions)
 
-    if (!token) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-
-    // Verify the token
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
-    const { payload } = await jwtVerify(token, secret)
 
     // Get user data from database
     const user = await prisma.user.findUnique({
       where: { 
-        email: payload.email as string 
+        email: session.user.email
       },
       select: {
         id: true,
@@ -37,9 +33,6 @@ export async function GET(request: Request) {
     return NextResponse.json(user)
   } catch (error) {
     console.error('Error getting user data:', error)
-    if (error instanceof Error && error.name === 'JWTExpired') {
-      return NextResponse.json({ error: 'Token expired' }, { status: 401 })
-    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

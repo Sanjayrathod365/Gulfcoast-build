@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { Prisma } from '@prisma/client'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 const prisma = new PrismaClient()
 
@@ -9,32 +11,47 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = await Promise.resolve(params.id)
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
     const patient = await prisma.patient.findUnique({
-      where: { id },
+      where: { id: params.id },
       include: {
-        procedures: true,
-        referringDoctor: true,
+        status: true,
         payer: true,
+        referringDoctor: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        procedures: {
+          include: {
+            status: true,
+            facility: true,
+            physician: true,
+          },
+          orderBy: {
+            scheduleDate: 'desc',
+          },
+        },
       },
     })
 
     if (!patient) {
-      return NextResponse.json(
-        { message: 'Patient not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Patient not found' }, { status: 404 })
     }
 
     return NextResponse.json(patient)
   } catch (error) {
     console.error('Error fetching patient:', error)
     return NextResponse.json(
-      { message: 'Error fetching patient' },
+      { error: 'Failed to fetch patient data' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -125,7 +142,16 @@ export async function PUT(
           where: { id },
           data: updateData,
           include: {
-            procedures: true,
+            procedures: {
+              include: {
+                status: true,
+                facility: true,
+                physician: true,
+              },
+              orderBy: {
+                scheduleDate: 'desc',
+              },
+            },
             referringDoctor: true,
             payer: true,
           },

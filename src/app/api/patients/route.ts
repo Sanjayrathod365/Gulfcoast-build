@@ -10,35 +10,21 @@ export async function GET() {
       include: {
         status: true,
         payer: true,
-        procedures: {
-          include: {
-            status: true
-          }
-        }
+        appointments: true,
+        cases: true
       },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    // Map the procedures to include exam name
-    const patientsWithExamNames = patients.map(patient => ({
-      ...patient,
-      procedures: patient.procedures.map(proc => ({
-        ...proc,
-        exam: proc.exam // This is already the exam name from the schema
-      }))
-    }))
-
-    return NextResponse.json(patientsWithExamNames)
+    return NextResponse.json(patients)
   } catch (error) {
     console.error('Error fetching patients:', error)
     return NextResponse.json(
       { message: 'Error fetching patients' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -52,44 +38,40 @@ export async function POST(request: Request) {
 
     const data = await request.json()
 
-    const patient = await prisma.patient.create({
-      data: {
-        firstName: data.firstName,
-        middleName: data.middleName,
-        lastName: data.lastName,
-        dateOfBirth: data.dateOfBirth,
-        phone: data.phone,
-        altNumber: data.altNumber,
-        email: data.email,
-        doidol: data.doidol,
-        gender: data.gender,
-        address: data.address,
-        city: data.city,
-        zip: data.zip,
-        statusId: data.statusId,
-        payerId: data.payerId,
-        lawyer: data.lawyer,
-        orderDate: data.orderDate,
-        orderFor: data.orderFor,
-        referringDoctorId: data.referringDoctorId,
-        procedures: {
-          create: data.procedures.map((proc: any) => ({
-            exam: proc.examId,
-            scheduleDate: proc.scheduleDate,
-            scheduleTime: proc.scheduleTime,
-            facilityId: proc.facilityId,
-            physicianId: proc.physicianId,
-            statusId: proc.statusId,
-            lop: proc.lop,
-            isCompleted: proc.isCompleted
-          }))
+    const createData: Prisma.PatientCreateInput = {
+      firstName: data.firstName,
+      middleName: data.middleName || null,
+      lastName: data.lastName,
+      dateOfBirth: new Date(data.dateOfBirth),
+      phone: data.phone,
+      altNumber: data.altNumber || null,
+      email: data.email || null,
+      gender: data.gender || null,
+      address: data.address || null,
+      city: data.city || null,
+      zip: data.zip || null,
+      lawyer: data.lawyer || null,
+      orderDate: data.orderDate ? new Date(data.orderDate) : new Date(),
+      orderFor: data.orderFor || null,
+      ...(data.statusId && {
+        status: {
+          connect: { id: data.statusId }
         }
-      },
+      }),
+      ...(data.payerId && {
+        payer: {
+          connect: { id: data.payerId }
+        }
+      })
+    }
+
+    const patient = await prisma.patient.create({
+      data: createData,
       include: {
         status: true,
         payer: true,
-        referringDoctor: true,
-        procedures: true
+        appointments: true,
+        cases: true
       }
     })
 
@@ -115,126 +97,61 @@ export async function PUT(request: Request) {
       )
     }
 
-    const body = await request.json()
-    const {
-      firstName,
-      middleName,
-      lastName,
-      dateOfBirth,
-      phone,
-      altNumber,
-      email,
-      doidol,
-      gender,
-      address,
-      city,
-      zip,
-      statusId,
-      payerId,
-      lawyer,
-      orderDate,
-      orderFor,
-      referringDoctorId,
-      procedures
-    } = body
+    const data = await request.json()
 
     // Validate required fields
-    if (!firstName?.trim() || !lastName?.trim() || !payerId || !statusId) {
+    if (!data.firstName?.trim() || !data.lastName?.trim()) {
       return NextResponse.json(
-        { message: 'First name, last name, payer, and status are required' },
+        { message: 'First name and last name are required' },
         { status: 400 }
       )
     }
 
-    // Set default values for required fields
-    const patientData: Prisma.PatientUpdateInput = {
-      firstName: firstName.trim(),
-      middleName: middleName?.trim() || '',
-      lastName: lastName.trim(),
-      phone: phone?.trim() || '',
-      altNumber: altNumber?.trim() || '',
-      email: email?.trim() || '',
-      doidol: doidol?.trim() || null,
-      gender: gender || 'unknown',
-      address: address?.trim() || '',
-      city: city?.trim() || '',
-      zip: zip?.trim() || '',
-      status: {
-        connect: { id: statusId }
-      },
-      payer: {
-        connect: { id: payerId }
-      },
-      lawyer: lawyer?.trim() || null,
-      orderFor: orderFor?.trim() || '',
-      referringDoctor: referringDoctorId ? {
-        connect: { id: referringDoctorId }
-      } : undefined,
+    const updateData: Prisma.PatientUpdateInput = {
+      firstName: data.firstName.trim(),
+      middleName: data.middleName?.trim() || null,
+      lastName: data.lastName.trim(),
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+      phone: data.phone?.trim() || null,
+      altNumber: data.altNumber?.trim() || null,
+      email: data.email?.trim() || null,
+      gender: data.gender || null,
+      address: data.address?.trim() || null,
+      city: data.city?.trim() || null,
+      zip: data.zip?.trim() || null,
+      lawyer: data.lawyer?.trim() || null,
+      orderDate: data.orderDate ? new Date(data.orderDate) : undefined,
+      orderFor: data.orderFor?.trim() || null,
+      ...(data.statusId && {
+        status: {
+          connect: { id: data.statusId }
+        }
+      }),
+      ...(data.payerId && {
+        payer: {
+          connect: { id: data.payerId }
+        }
+      })
     }
 
-    // Update dates if provided
-    if (dateOfBirth) {
-      const parsedDateOfBirth = new Date(dateOfBirth)
-      if (!isNaN(parsedDateOfBirth.getTime())) {
-        patientData.dateOfBirth = parsedDateOfBirth
-      }
-    }
-
-    if (orderDate) {
-      const parsedOrderDate = new Date(orderDate)
-      if (!isNaN(parsedOrderDate.getTime())) {
-        patientData.orderDate = parsedOrderDate
-      }
-    }
-
-    // Handle procedures update
-    if (procedures && Array.isArray(procedures)) {
-      patientData.procedures = {
-        deleteMany: {}, // Delete all existing procedures
-        create: procedures.map((proc: any) => ({
-          exam: proc.examId,
-          scheduleDate: new Date(proc.scheduleDate),
-          scheduleTime: proc.scheduleTime,
-          facility: {
-            connect: { id: proc.facilityId }
-          },
-          physician: {
-            connect: { id: proc.physicianId }
-          },
-          status: {
-            connect: { id: proc.statusId }
-          },
-          lop: proc.lop,
-          isCompleted: proc.isCompleted
-        }))
-      }
-    }
-
-    // Update patient with validated data
     const patient = await prisma.patient.update({
       where: { id },
-      data: patientData,
+      data: updateData,
       include: {
         status: true,
         payer: true,
-        referringDoctor: true,
-        procedures: {
-          include: {
-            status: true
-          }
-        }
-      },
+        appointments: true,
+        cases: true
+      }
     })
 
     return NextResponse.json(patient)
   } catch (error) {
     console.error('Error updating patient:', error)
     return NextResponse.json(
-      { message: 'Error updating patient' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -251,17 +168,15 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.patient.delete({
-      where: { id },
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Patient deleted successfully' })
   } catch (error) {
     console.error('Error deleting patient:', error)
     return NextResponse.json(
-      { message: 'Error deleting patient' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 } 

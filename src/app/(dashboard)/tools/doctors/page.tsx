@@ -27,9 +27,17 @@ export default function DoctorsPage() {
     const fetchDoctors = async () => {
       try {
         const response = await fetch('/api/doctors')
-        if (!response.ok) throw new Error('Failed to fetch doctors')
         const data = await response.json()
-        setDoctors(data)
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch doctors')
+        }
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch doctors')
+        }
+
+        setDoctors(data.data || [])
       } catch (error) {
         console.error('Error fetching doctors:', error)
       } finally {

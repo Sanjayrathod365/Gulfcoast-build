@@ -54,17 +54,28 @@ export default function AddDoctorPage() {
       return
     }
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    if (!form) {
+      setError('Form not found')
+      setIsLoading(false)
+      return
+    }
+
+    const formData = new FormData(form)
     const data = {
       prefix: formData.get('prefix')?.toString() || '',
       name: formData.get('name')?.toString() || '',
-      phoneNumber: phoneNumber,
-      faxNumber: faxNumber,
+      phoneNumber: phoneNumber || undefined,
+      faxNumber: faxNumber || undefined,
       email: formData.get('email')?.toString() || '',
-      clinicName: formData.get('clinicName')?.toString() || '',
-      address: formData.get('address')?.toString() || '',
-      mapLink: formData.get('mapLink')?.toString() || null,
+      clinicName: formData.get('clinicName')?.toString() || undefined,
+      address: formData.get('address')?.toString() || undefined,
+      mapLink: formData.get('mapLink')?.toString() || undefined,
+      status: (formData.get('status')?.toString() || 'Active') as 'Active' | 'Inactive',
+      hasLogin: false
     }
+
+    console.log('Sending data to API:', data)
 
     try {
       const response = await fetch('/api/doctors', {
@@ -75,9 +86,17 @@ export default function AddDoctorPage() {
         body: JSON.stringify(data),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create doctor')
+      let responseData: { success: boolean; data?: any; error?: string } | undefined
+      try {
+        responseData = await response.json()
+      } catch (e) {
+        console.error('Failed to parse API response:', e)
+        throw new Error('Invalid response from server')
+      }
+
+      if (!response.ok || !responseData?.success) {
+        const errorMessage = responseData?.error || `Failed to create doctor: ${response.status}`
+        throw new Error(errorMessage)
       }
 
       router.push('/tools/doctors')
@@ -199,6 +218,21 @@ export default function AddDoctorPage() {
                 required
                 className="mt-1 block w-full rounded-md border-gray-300 bg-white text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
+            </div>
+
+            <div className="sm:col-span-3">
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 bg-white text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
             </div>
 
             <div className="sm:col-span-6">
