@@ -203,13 +203,11 @@ export default function PatientsPage() {
                       {patient.procedures?.map((procedure) => (
                         <div
                           key={procedure.id}
-                          className={`px-2 py-1 rounded-md text-xs font-medium ${
-                            procedure.status.name === 'Completed'
-                              ? 'bg-green-100 text-green-800'
-                              : procedure.status.name === 'Scheduled'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                          className="px-2 py-1 rounded-md text-xs font-medium"
+                          style={{ 
+                            backgroundColor: procedure.status.color + '20',
+                            color: procedure.status.color
+                          }}
                         >
                           {procedure.exam.name} - {formatDate(procedure.scheduleDate)}
                         </div>

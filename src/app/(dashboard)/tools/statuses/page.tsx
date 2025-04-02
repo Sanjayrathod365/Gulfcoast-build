@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 interface Status {
   id: string
@@ -11,19 +12,28 @@ interface Status {
 
 export default function StatusesPage() {
   const router = useRouter()
+  const { data: session, status: sessionStatus } = useSession()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [statuses, setStatuses] = useState<Status[]>([])
 
   useEffect(() => {
-    fetchStatuses()
-  }, [])
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+
+    if (sessionStatus === 'authenticated') {
+      fetchStatuses()
+    }
+  }, [sessionStatus, router])
 
   const fetchStatuses = async () => {
     try {
       const response = await fetch('/api/statuses')
       if (!response.ok) {
-        throw new Error('Failed to fetch statuses')
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to fetch statuses')
       }
       const data = await response.json()
       setStatuses(data)
@@ -45,13 +55,22 @@ export default function StatusesPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete status')
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete status')
       }
 
       setStatuses(statuses.filter(status => status.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     }
+  }
+
+  if (sessionStatus === 'loading') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-gray-500">Loading...</div>
+      </div>
+    )
   }
 
   return (

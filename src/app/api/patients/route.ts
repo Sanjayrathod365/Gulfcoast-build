@@ -11,7 +11,18 @@ export async function GET() {
         status: true,
         payer: true,
         appointments: true,
-        cases: true
+        cases: true,
+        procedures: {
+          include: {
+            exam: true,
+            facility: true,
+            physician: true,
+            status: true,
+          },
+          orderBy: {
+            scheduleDate: 'desc',
+          },
+        }
       },
       orderBy: {
         createdAt: 'desc'

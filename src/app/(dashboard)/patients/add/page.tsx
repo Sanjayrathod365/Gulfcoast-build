@@ -209,7 +209,7 @@ export default function AddPatientPage() {
     // Format dates
     if (name === 'dateOfBirth' || name === 'doidol' || name === 'orderDate') {
       // Remove any non-numeric characters
-      const numbers = value.replace(/\D/g, '')
+      const numbers = value.replace(/\D/g, '').slice(0, 8) // Limit to 8 digits
       
       // Format as MM/DD/YYYY
       if (numbers.length <= 2) {
@@ -225,12 +225,7 @@ export default function AddPatientPage() {
       } else {
         const month = numbers.slice(0, 2)
         const day = numbers.slice(2, 4)
-        let year = numbers.slice(4)
-        
-        // Limit year to 4 digits
-        if (year.length > 4) {
-          year = year.slice(0, 4)
-        }
+        const year = numbers.slice(4, 8)
         
         // Validate month (01-12)
         if (parseInt(month) > 12) {
@@ -253,7 +248,10 @@ export default function AddPatientPage() {
       }
     }
 
-    setFormData((prev) => ({ ...prev, [name]: formattedValue }))
+    setFormData(prev => ({
+      ...prev,
+      [name]: formattedValue
+    }))
   }
 
   const addProcedure = () => {
@@ -416,6 +414,7 @@ export default function AddPatientPage() {
                         onChange={handleChange}
                         placeholder="MM/DD/YYYY"
                         pattern="\d{2}/\d{2}/\d{4}"
+                        maxLength={10}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         required
                       />
@@ -500,6 +499,7 @@ export default function AddPatientPage() {
                         onChange={handleChange}
                         placeholder="MM/DD/YYYY"
                         pattern="\d{2}/\d{2}/\d{4}"
+                        maxLength={10}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                       <button
@@ -662,6 +662,7 @@ export default function AddPatientPage() {
                         onChange={handleChange}
                         placeholder="MM/DD/YYYY"
                         pattern="\d{2}/\d{2}/\d{4}"
+                        maxLength={10}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                       <button

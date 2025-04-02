@@ -95,22 +95,18 @@ export async function PUT(
       phone: phone?.trim() || '',
       altNumber: altNumber?.trim() || '',
       email: email?.trim() || '',
-      doidol: doidol ? doidol : null,
       gender: gender || 'unknown',
       address: address?.trim() || '',
       city: city?.trim() || '',
       zip: zip?.trim() || '',
-      status: {
+      status: statusId ? {
         connect: { id: statusId }
-      },
-      payer: {
+      } : undefined,
+      payer: payerId ? {
         connect: { id: payerId }
-      },
+      } : undefined,
       lawyer: lawyer?.trim() || null,
       orderFor: orderFor?.trim() || '',
-      referringDoctor: referringDoctorId ? {
-        connect: { id: referringDoctorId }
-      } : undefined,
     }
 
     // Update dates if provided
@@ -146,45 +142,9 @@ export async function PUT(
                 scheduleDate: 'desc',
               },
             },
-            referringDoctor: true,
             payer: true,
           },
         })
-
-        // Handle attorney relationship through Case model
-        if (attorneyId) {
-          // Check if a case already exists
-          const existingCase = await tx.case.findFirst({
-            where: { patientId: id }
-          })
-
-          if (existingCase) {
-            // Update existing case
-            await tx.case.update({
-              where: { id: existingCase.id },
-              data: {
-                attorney: {
-                  connect: { id: attorneyId }
-                }
-              }
-            })
-          } else {
-            // Create new case
-            await tx.case.create({
-              data: {
-                patient: {
-                  connect: { id }
-                },
-                attorney: {
-                  connect: { id: attorneyId }
-                },
-                caseNumber: `CASE-${Date.now()}`, // Generate a temporary case number
-                status: 'active',
-                filingDate: new Date()
-              }
-            })
-          }
-        }
 
         // Handle procedures if provided
         if (procedures && procedures.length > 0) {
@@ -195,19 +155,44 @@ export async function PUT(
 
           // Create new procedures
           for (const proc of procedures) {
-            await tx.procedure.create({
-              data: {
-                patientId: id,
-                exam: proc.examId, // Store the exam name directly
-                scheduleDate: new Date(proc.scheduleDate),
-                scheduleTime: proc.scheduleTime,
-                facilityId: proc.facilityId,
-                physicianId: proc.physicianId,
-                statusId: proc.statusId,
-                lop: proc.lop || null,
-                isCompleted: proc.isCompleted || false
+            // Skip if required IDs are missing or invalid
+            if (!proc.examId || !proc.facilityId || !proc.physicianId || !proc.statusId) {
+              console.warn('Skipping procedure creation due to missing required IDs:', proc)
+              continue
+            }
+
+            try {
+              await tx.procedure.create({
+                data: {
+                  patient: {
+                    connect: { id }
+                  },
+                  exam: {
+                    connect: { id: proc.examId.toString() }
+                  },
+                  scheduleDate: new Date(proc.scheduleDate),
+                  scheduleTime: proc.scheduleTime || '',
+                  facility: {
+                    connect: { id: proc.facilityId.toString() }
+                  },
+                  physician: {
+                    connect: { id: proc.physicianId.toString() }
+                  },
+                  status: {
+                    connect: { id: proc.statusId.toString() }
+                  },
+                  lop: proc.lop || null,
+                  isCompleted: proc.isCompleted || false
+                }
+              })
+            } catch (error) {
+              console.error('Error creating procedure:', error, 'Procedure data:', proc)
+              if (error instanceof Error) {
+                throw new Error(`Failed to create procedure: ${error.message}`)
+              } else {
+                throw new Error('Failed to create procedure: Unknown error')
               }
-            })
+            }
           }
         }
 

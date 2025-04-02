@@ -1,16 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 export default function AddStatusPage() {
   const router = useRouter()
+  const { data: session, status: sessionStatus } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     color: '#6B7280' // Default gray color
   })
+
+  useEffect(() => {
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/login')
+    }
+  }, [sessionStatus, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -36,7 +44,7 @@ export default function AddStatusPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.message || 'Failed to create status')
+        throw new Error(data.error || 'Failed to create status')
       }
 
       router.push('/tools/statuses')
@@ -45,6 +53,14 @@ export default function AddStatusPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (sessionStatus === 'loading') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-gray-500">Loading...</div>
+      </div>
+    )
   }
 
   return (

@@ -78,6 +78,7 @@ model Patient {
   phone           String
   altNumber       String?
   email           String?
+  doidol          DateTime?
   gender          String?
   address         String?
   city            String?

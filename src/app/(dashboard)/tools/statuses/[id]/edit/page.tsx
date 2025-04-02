@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
+import { useSession } from 'next-auth/react'
 
 interface Status {
   id: string
@@ -18,6 +19,7 @@ interface FormData {
 export default function EditStatusPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
+  const { data: session, status: sessionStatus } = useSession()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState<FormData>({
@@ -26,14 +28,22 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
   })
 
   useEffect(() => {
-    fetchStatus()
-  }, [resolvedParams.id])
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+
+    if (sessionStatus === 'authenticated') {
+      fetchStatus()
+    }
+  }, [sessionStatus, router, resolvedParams.id])
 
   const fetchStatus = async () => {
     try {
       const response = await fetch(`/api/statuses?id=${resolvedParams.id}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch status')
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to fetch status')
       }
       const data = await response.json()
       setFormData({
@@ -74,7 +84,7 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.message || 'Failed to update status')
+        throw new Error(data.error || 'Failed to update status')
       }
 
       router.push('/tools/statuses')
@@ -85,7 +95,7 @@ export default function EditStatusPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (isLoading) {
+  if (sessionStatus === 'loading' || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center text-gray-500">Loading...</div>
