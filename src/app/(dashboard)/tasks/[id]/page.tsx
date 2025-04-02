@@ -1,143 +1,121 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-
-interface User {
-  id: string
-  name: string | null
-  email: string
-}
 
 interface Task {
   id: string
   title: string
-  description: string | null
+  description: string
   status: string
   priority: string
-  dueDate: string | null
+  dueDate: string
   assignedToId: string | null
-  assignedTo: User | null
+  assignedTo: {
+    id: string
+    name: string
+    email: string
+  } | null
   createdAt: string
   updatedAt: string
 }
 
-export default function TaskDetailPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
+export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [task, setTask] = useState<Task | null>(null)
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [users, setUsers] = useState<User[]>([])
-  const [task, setTask] = useState<Task | null>(null)
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    status: "",
-    priority: "",
-    dueDate: "",
-    assignedToId: "",
-  })
+
+  const { id } = use(params)
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    }
-  }, [status, router])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [taskResponse, usersResponse] = await Promise.all([
-          fetch(`/api/tasks/${params.id}`),
-          fetch("/api/users"),
-        ])
-
-        if (!taskResponse.ok || !usersResponse.ok) {
-          throw new Error("Failed to fetch data")
-        }
-
-        const taskData = await taskResponse.json()
-        const usersData = await usersResponse.json()
-
-        setTask(taskData)
-        setUsers(usersData)
-        setFormData({
-          title: taskData.title,
-          description: taskData.description || "",
-          status: taskData.status,
-          priority: taskData.priority,
-          dueDate: taskData.dueDate
-            ? new Date(taskData.dueDate).toISOString().slice(0, 16)
-            : "",
-          assignedToId: taskData.assignedToId || "",
-        })
-      } catch (error) {
-        console.error("Error fetching data:", error)
-        setError("Failed to load task details")
-      } finally {
-        setLoading(false)
-      }
+      return
     }
 
     if (status === "authenticated") {
       fetchData()
     }
-  }, [params.id, status])
+  }, [status, router, id])
+
+  const fetchData = async () => {
+    try {
+      const [taskResponse, usersResponse] = await Promise.all([
+        fetch(`/api/tasks/${id}`),
+        fetch("/api/users")
+      ])
+
+      if (!taskResponse.ok || !usersResponse.ok) {
+        throw new Error("Failed to fetch data")
+      }
+
+      const [taskData, usersData] = await Promise.all([
+        taskResponse.json(),
+        usersResponse.json()
+      ])
+
+      setTask(taskData)
+      setUsers(usersData)
+    } catch (error) {
+      setError("Failed to fetch task details")
+      console.error("Error fetching data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaving(true)
-    setError(null)
+    if (!task) return
 
+    setSaving(true)
     try {
-      const response = await fetch(`/api/tasks/${params.id}`, {
+      const response = await fetch(`/api/tasks/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(task),
       })
 
       if (!response.ok) {
-        const error = await response.text()
-        throw new Error(error)
+        throw new Error("Failed to update task")
       }
 
       const updatedTask = await response.json()
       setTask(updatedTask)
+      router.push("/tasks")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to update task")
+      setError("Failed to update task")
+      console.error("Error updating task:", error)
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this task?")) {
-      return
-    }
+    if (!confirm("Are you sure you want to delete this task?")) return
 
+    setSaving(true)
     try {
-      const response = await fetch(`/api/tasks/${params.id}`, {
+      const response = await fetch(`/api/tasks/${id}`, {
         method: "DELETE",
       })
 
@@ -148,35 +126,35 @@ export default function TaskDetailPage({
       router.push("/tasks")
     } catch (error) {
       setError("Failed to delete task")
+      console.error("Error deleting task:", error)
+    } finally {
+      setSaving(false)
     }
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "in_progress":
-        return "bg-blue-100 text-blue-800"
+    switch (status.toLowerCase()) {
+      case "todo":
+        return "bg-gray-500"
+      case "in progress":
+        return "bg-blue-500"
+      case "done":
+        return "bg-green-500"
       default:
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-gray-500"
     }
   }
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800"
+    switch (priority.toLowerCase()) {
+      case "low":
+        return "bg-green-500"
       case "medium":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-500"
+      case "high":
+        return "bg-red-500"
       default:
-        return "bg-green-100 text-green-800"
+        return "bg-gray-500"
     }
   }
 
@@ -188,86 +166,82 @@ export default function TaskDetailPage({
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">{error}</div>
+      </div>
+    )
+  }
+
   if (!task) {
     return (
-      <div className="container mx-auto py-10">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500">Task not found</h1>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Task not found</div>
       </div>
     )
   }
 
   return (
     <div className="container mx-auto py-10">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Task Details</h1>
-          <div className="flex space-x-2">
-            <Badge className={getStatusColor(task.status)}>
-              {task.status.replace("_", " ")}
-            </Badge>
-            <Badge className={getPriorityColor(task.priority)}>
-              {task.priority}
-            </Badge>
-          </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Task Details</h1>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={() => router.push("/tasks")}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={saving}>
+            {saving ? "Deleting..." : "Delete Task"}
+          </Button>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            value={task.title}
+            onChange={(e) => setTask({ ...task, title: e.target.value })}
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="text-red-500 text-sm">{error}</div>
-          )}
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={task.description}
+            onChange={(e) => setTask({ ...task, description: e.target.value })}
+          />
+        </div>
 
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
-              value={formData.status}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, status: value }))
-              }
+              value={task.status}
+              onValueChange={(value) => setTask({ ...task, status: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select status" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="todo">To Do</SelectItem>
+                <SelectItem value="in progress">In Progress</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="priority">Priority</Label>
             <Select
-              value={formData.priority}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, priority: value }))
-              }
+              value={task.priority}
+              onValueChange={(value) => setTask({ ...task, priority: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select priority" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Low</SelectItem>
@@ -276,60 +250,46 @@ export default function TaskDetailPage({
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="dueDate">Due Date</Label>
             <Input
               id="dueDate"
-              name="dueDate"
-              type="datetime-local"
-              value={formData.dueDate}
-              onChange={handleChange}
+              type="date"
+              value={task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""}
+              onChange={(e) => setTask({ ...task, dueDate: e.target.value })}
             />
           </div>
 
-          <div>
-            <Label htmlFor="assignedToId">Assign To</Label>
+          <div className="space-y-2">
+            <Label htmlFor="assignedTo">Assigned To</Label>
             <Select
-              value={formData.assignedToId}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, assignedToId: value }))
-              }
+              value={task.assignedTo?.id || "unassigned"}
+              onValueChange={(value) => setTask({ ...task, assignedToId: value === "unassigned" ? null : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select user" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.name || user.email}
+                    {user.name} ({user.email})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div className="flex justify-end space-x-4">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-            >
-              Delete Task
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/tasks")}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </form>
-      </div>
+        <div className="flex justify-end space-x-2">
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 } 

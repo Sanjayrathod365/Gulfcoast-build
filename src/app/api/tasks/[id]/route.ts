@@ -9,24 +9,42 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 })
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     const task = await prisma.task.findUnique({
       where: {
         id: params.id,
       },
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
     })
 
     if (!task) {
-      return new NextResponse("Task not found", { status: 404 })
+      return NextResponse.json(
+        { error: "Task not found" },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json(task)
   } catch (error) {
-    console.error("[TASK_GET]", error)
-    return new NextResponse("Internal error", { status: 500 })
+    console.error("[TASK_GET] Error", error)
+    return NextResponse.json(
+      { error: "Internal error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -36,15 +54,21 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 })
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     const body = await req.json()
-    const { title, description, status, priority, dueDate } = body
+    const { title, description, status, priority, dueDate, assignedToId } = body
 
     if (!title) {
-      return new NextResponse("Title is required", { status: 400 })
+      return NextResponse.json(
+        { error: "Title is required" },
+        { status: 400 }
+      )
     }
 
     const task = await prisma.task.update({
@@ -57,13 +81,26 @@ export async function PUT(
         status,
         priority,
         dueDate: dueDate ? new Date(dueDate) : null,
+        assignedToId
       },
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
     })
 
     return NextResponse.json(task)
   } catch (error) {
-    console.error("[TASK_PUT]", error)
-    return new NextResponse("Internal error", { status: 500 })
+    console.error("[TASK_PUT] Error", error)
+    return NextResponse.json(
+      { error: "Internal error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -73,8 +110,11 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 })
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     await prisma.task.delete({
@@ -85,7 +125,10 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error("[TASK_DELETE]", error)
-    return new NextResponse("Internal error", { status: 500 })
+    console.error("[TASK_DELETE] Error", error)
+    return NextResponse.json(
+      { error: "Internal error" },
+      { status: 500 }
+    )
   }
 } 
