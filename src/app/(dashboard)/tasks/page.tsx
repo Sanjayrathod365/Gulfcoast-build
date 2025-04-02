@@ -1,122 +1,166 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { PlusIcon } from '@heroicons/react/24/outline'
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Plus } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 interface Task {
   id: string
   title: string
-  description: string
-  dueDate: string
-  status: 'pending' | 'in_progress' | 'completed'
-  priority: 'low' | 'medium' | 'high'
+  description: string | null
+  status: string
+  priority: string
+  dueDate: string | null
+  createdAt: string
 }
 
 export default function TasksPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login")
+    } else if (status === "authenticated") {
+      fetchTasks()
+    }
+  }, [status, router])
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch("/api/tasks")
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks")
+      }
+      const data = await response.json()
+      setTasks(data)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to fetch tasks")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-500"
+      case "in progress":
+        return "bg-blue-500"
+      case "pending":
+        return "bg-yellow-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case "high":
+        return "bg-red-500"
+      case "medium":
+        return "bg-orange-500"
+      case "low":
+        return "bg-green-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  if (status === "loading" || loading) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading tasks...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Tasks</h1>
-        <Button>
-          <PlusIcon className="h-5 w-5 mr-2" />
-          New Task
-        </Button>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Tasks</h1>
+        <Link href="/tasks/add">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Task
+          </Button>
+        </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasks.filter(task => task.status === 'pending').length === 0 ? (
-              <p className="text-gray-500">No pending tasks</p>
-            ) : (
-              <ul className="space-y-2">
-                {tasks.filter(task => task.status === 'pending').map(task => (
-                  <li key={task.id} className="p-3 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium">{task.title}</h3>
-                    <p className="text-sm text-gray-500">{task.description}</p>
-                    <div className="mt-2 flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Due: {task.dueDate}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>In Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasks.filter(task => task.status === 'in_progress').length === 0 ? (
-              <p className="text-gray-500">No tasks in progress</p>
-            ) : (
-              <ul className="space-y-2">
-                {tasks.filter(task => task.status === 'in_progress').map(task => (
-                  <li key={task.id} className="p-3 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium">{task.title}</h3>
-                    <p className="text-sm text-gray-500">{task.description}</p>
-                    <div className="mt-2 flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Due: {task.dueDate}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Completed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasks.filter(task => task.status === 'completed').length === 0 ? (
-              <p className="text-gray-500">No completed tasks</p>
-            ) : (
-              <ul className="space-y-2">
-                {tasks.filter(task => task.status === 'completed').map(task => (
-                  <li key={task.id} className="p-3 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium">{task.title}</h3>
-                    <p className="text-sm text-gray-500">{task.description}</p>
-                    <div className="mt-2 flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Due: {task.dueDate}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Due Date</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tasks.map((task) => (
+              <TableRow key={task.id}>
+                <TableCell className="font-medium">{task.title}</TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(task.status)}>
+                    {task.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge className={getPriorityColor(task.priority)}>
+                    {task.priority}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {task.dueDate
+                    ? new Date(task.dueDate).toLocaleDateString()
+                    : "No due date"}
+                </TableCell>
+                <TableCell>
+                  {new Date(task.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Link href={`/tasks/${task.id}`}>
+                    <Button variant="ghost" size="sm">
+                      View
+                    </Button>
+                  </Link>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
