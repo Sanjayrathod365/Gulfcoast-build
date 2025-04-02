@@ -12,9 +12,8 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const patient = await prisma.patient.findUnique({
@@ -22,17 +21,12 @@ export async function GET(
       include: {
         status: true,
         payer: true,
-        referringDoctor: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         procedures: {
           include: {
-            status: true,
+            exam: true,
             facility: true,
             physician: true,
+            status: true,
           },
           orderBy: {
             scheduleDate: 'desc',
@@ -49,7 +43,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching patient:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch patient data' },
+      { error: 'Failed to fetch patient' },
       { status: 500 }
     )
   }

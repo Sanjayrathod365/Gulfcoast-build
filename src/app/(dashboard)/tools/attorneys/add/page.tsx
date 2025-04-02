@@ -44,6 +44,7 @@ export default function AddAttorneyPage() {
     hasLogin: false
   })
   const [caseManagers, setCaseManagers] = useState<CaseManagerData[]>([])
+  const [zipLookupError, setZipLookupError] = useState<string | null>(null)
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -60,16 +61,34 @@ export default function AddAttorneyPage() {
 
     // Handle ZIP code lookup
     if (name === 'zipcode' && value.length === 5) {
-      const location = await lookupZipCode(value)
-      if (location) {
+      setZipLookupError(null)
+      try {
+        const location = await lookupZipCode(value)
+        if (location) {
+          setFormData(prev => ({
+            ...prev,
+            zipcode: value,
+            city: location.city,
+            state: location.state
+          }))
+        } else {
+          // If ZIP code lookup fails, just update the ZIP code
+          setFormData(prev => ({
+            ...prev,
+            zipcode: value
+          }))
+          setZipLookupError('ZIP code lookup failed. Please enter city and state manually.')
+        }
+      } catch (error) {
+        console.log('Error looking up ZIP code:', error)
+        // If there's an error, just update the ZIP code
         setFormData(prev => ({
           ...prev,
-          zipcode: value,
-          city: location.city,
-          state: location.state
+          zipcode: value
         }))
-        return
+        setZipLookupError('ZIP code lookup failed. Please enter city and state manually.')
       }
+      return
     }
 
     setFormData(prev => ({
@@ -326,6 +345,11 @@ export default function AddAttorneyPage() {
               pattern="[0-9]{5}"
               maxLength={5}
             />
+            {zipLookupError && (
+              <p className="mt-1 text-sm text-yellow-600">
+                {zipLookupError}
+              </p>
+            )}
           </div>
 
           <div>

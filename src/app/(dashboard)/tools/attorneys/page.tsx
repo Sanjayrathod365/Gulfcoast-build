@@ -9,14 +9,24 @@ interface Attorney {
     name: string | null
     email: string
   } | null
+  firstName: string
+  lastName: string
+  email: string
   phone: string
-  faxNumber: string | null
-  notes: string | null
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  barNumber: string | null
   caseManagers: Array<{
-    name: string
+    id: string
+    firstName: string
+    lastName: string
     email: string
     phone: string
   }>
+  createdAt: string
+  updatedAt: string
 }
 
 export default function AttorneysPage() {
@@ -31,13 +41,17 @@ export default function AttorneysPage() {
 
   const fetchAttorneys = async () => {
     try {
+      console.log('Fetching attorneys...')
       const response = await fetch('/api/attorneys')
+      console.log('Response status:', response.status)
       if (!response.ok) {
         throw new Error('Failed to fetch attorneys')
       }
       const data = await response.json()
+      console.log('Fetched attorneys data:', JSON.stringify(data, null, 2))
       setAttorneys(data)
     } catch (err) {
+      console.error('Error fetching attorneys:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsLoading(false)
@@ -89,26 +103,17 @@ export default function AttorneysPage() {
             {isLoading ? (
               <div className="text-center py-4">Loading...</div>
             ) : attorneys.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">No attorneys found</div>
+              <div className="text-center py-4">No attorneys found</div>
             ) : (
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Case Managers
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Case Managers</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -116,21 +121,26 @@ export default function AttorneysPage() {
                     <tr key={attorney.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {attorney.user?.name || 'N/A'}
+                          {`${attorney.firstName} ${attorney.lastName}`}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{attorney.user?.email || 'N/A'}</div>
+                        <div className="text-sm text-gray-900">{attorney.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{attorney.phone || 'N/A'}</div>
+                        <div className="text-sm text-gray-900">{attorney.phone}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {attorney.caseManagers.length} case manager(s)
+                          {attorney.city && attorney.state ? `${attorney.city}, ${attorney.state}` : 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {attorney.caseManagers.length} manager{attorney.caseManagers.length !== 1 ? 's' : ''}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => router.push(`/tools/attorneys/${attorney.id}/edit`)}
                           className="text-indigo-600 hover:text-indigo-900 mr-4"

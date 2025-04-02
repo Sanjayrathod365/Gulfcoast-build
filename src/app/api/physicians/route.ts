@@ -39,13 +39,18 @@ export async function POST(request: Request) {
 
     const physician = await prisma.physician.create({
       data: {
-        prefix: data.prefix,
+        prefix: data.prefix || null,
         name: data.name,
-        suffix: data.suffix,
-        phoneNumber: data.phoneNumber,
+        suffix: data.suffix || null,
+        phoneNumber: data.phoneNumber || null,
+        faxNumber: data.faxNumber || null,
         email: data.email,
-        npiNumber: data.npiNumber,
-        isActive: data.isActive ?? true
+        npiNumber: data.npiNumber || null,
+        clinicName: data.clinicName || null,
+        address: data.address || null,
+        mapLink: data.mapLink || null,
+        status: data.status || 'Active',
+        isActive: true
       }
     })
 
@@ -67,8 +72,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const data = await request.json()
+    const { id, ...updateData } = data
 
     if (!id) {
       return NextResponse.json(
@@ -77,18 +82,21 @@ export async function PUT(request: Request) {
       )
     }
 
-    const data = await request.json()
-
     const physician = await prisma.physician.update({
       where: { id },
       data: {
-        prefix: data.prefix,
-        name: data.name,
-        suffix: data.suffix,
-        phoneNumber: data.phoneNumber,
-        email: data.email,
-        npiNumber: data.npiNumber,
-        isActive: data.isActive
+        prefix: updateData.prefix || null,
+        name: updateData.name,
+        suffix: updateData.suffix || null,
+        phoneNumber: updateData.phoneNumber || null,
+        faxNumber: updateData.faxNumber || null,
+        email: updateData.email,
+        npiNumber: updateData.npiNumber || null,
+        clinicName: updateData.clinicName || null,
+        address: updateData.address || null,
+        mapLink: updateData.mapLink || null,
+        status: updateData.status || 'Active',
+        isActive: updateData.isActive
       }
     })
 

@@ -55,6 +55,7 @@ model Status {
   name      String    @unique
   color     String
   patients  Patient[]
+  procedures Procedure[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -62,6 +63,7 @@ model Status {
 model Payer {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String    @unique
+  isActive  Boolean   @default(true)
   patients  Patient[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -89,6 +91,7 @@ model Patient {
   orderFor        String?
   appointments    Appointment[]
   cases           Case[]
+  procedures      Procedure[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -141,6 +144,28 @@ model Facility {
   email       String?
   mapLink     String?
   status      String    @default("active")
+  procedures  Procedure[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Exam {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  category    String
+  status      String     @default("active")
+  subExams    SubExam[]
+  procedures  Procedure[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model SubExam {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Float
+  examId      String    @db.ObjectId
+  exam        Exam      @relation(fields: [examId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -151,7 +176,7 @@ model Doctor {
   name        String
   phoneNumber String?
   faxNumber   String?
-  email       String    @unique
+  email       String
   clinicName  String?
   address     String?
   mapLink     String?
@@ -159,4 +184,43 @@ model Doctor {
   hasLogin    Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model Physician {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  prefix      String?
+  name        String
+  suffix      String?
+  phoneNumber String?
+  faxNumber   String?
+  email       String    @unique
+  npiNumber   String?
+  clinicName  String?
+  address     String?
+  mapLink     String?
+  status      String    @default("Active")
+  isActive    Boolean   @default(true)
+  procedures  Procedure[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Procedure {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  patientId     String    @db.ObjectId
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  examId        String    @db.ObjectId
+  exam          Exam      @relation(fields: [examId], references: [id])
+  scheduleDate  DateTime
+  scheduleTime  String
+  facilityId    String    @db.ObjectId
+  facility      Facility  @relation(fields: [facilityId], references: [id])
+  physicianId   String    @db.ObjectId
+  physician     Physician @relation(fields: [physicianId], references: [id])
+  statusId      String    @db.ObjectId
+  status        Status    @relation(fields: [statusId], references: [id])
+  lop           String?
+  isCompleted   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 } 

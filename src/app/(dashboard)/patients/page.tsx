@@ -13,10 +13,17 @@ interface Status {
 
 interface Procedure {
   id: string
-  exam: string
+  exam: {
+    id: string
+    name: string
+  }
   scheduleDate: string
   scheduleTime: string
-  status: Status
+  status: {
+    id: string
+    name: string
+    color: string
+  }
 }
 
 interface Patient {
@@ -193,26 +200,18 @@ export default function PatientsPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     <div className="flex flex-col gap-1">
-                      {patient.procedures.map((procedure) => (
+                      {patient.procedures?.map((procedure) => (
                         <div
                           key={procedure.id}
                           className={`px-2 py-1 rounded-md text-xs font-medium ${
-                            procedure.status.color === 'green'
+                            procedure.status.name === 'Completed'
                               ? 'bg-green-100 text-green-800'
-                              : procedure.status.color === 'red'
-                              ? 'bg-red-100 text-red-800'
-                              : procedure.status.color === 'yellow'
-                              ? 'bg-yellow-100 text-yellow-800'
+                              : procedure.status.name === 'Scheduled'
+                              ? 'bg-blue-100 text-blue-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          <div className="font-semibold">{procedure.exam}</div>
-                          <div className="text-xs opacity-75">
-                            {formatDate(procedure.scheduleDate)} {formatTime(procedure.scheduleTime)}
-                          </div>
-                          <div className="text-xs mt-1">
-                            Status: {procedure.status.name}
-                          </div>
+                          {procedure.exam.name} - {formatDate(procedure.scheduleDate)}
                         </div>
                       ))}
                     </div>

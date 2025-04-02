@@ -23,7 +23,7 @@ interface Attorney {
   address: string | null
   city: string | null
   state: string | null
-  zipcode: string | null
+  zip: string | null
   notes: string | null
   caseManagers: CaseManagerData[]
 }
@@ -36,7 +36,7 @@ interface FormData {
   address: string
   city: string
   state: string
-  zipcode: string
+  zip: string
   notes: string
   hasLogin: boolean
   password: string
@@ -58,7 +58,7 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
     address: '',
     city: '',
     state: '',
-    zipcode: '',
+    zip: '',
     notes: '',
     hasLogin: false,
     password: '',
@@ -93,14 +93,20 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
         address: attorney.address ?? '',
         city: attorney.city ?? '',
         state: attorney.state ?? '',
-        zipcode: attorney.zipcode ?? '',
+        zip: attorney.zip ?? '',
         notes: attorney.notes ?? '',
         hasLogin: false,
         password: '',
       })
       
       // Initialize case managers with empty array if undefined
-      setCaseManagers(attorney.caseManagers ?? [])
+      setCaseManagers(attorney.caseManagers?.map((manager: any) => ({
+        name: `${manager.firstName} ${manager.lastName}`.trim(),
+        email: manager.email || '',
+        phone: manager.phone || '',
+        phoneExt: manager.phoneExt || '',
+        faxNumber: manager.faxNumber || ''
+      })) ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -122,12 +128,12 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
     }
 
     // Handle ZIP code lookup
-    if (name === 'zipcode' && value.length === 5) {
+    if (name === 'zip' && value.length === 5) {
       const location = await lookupZipCode(value)
       if (location) {
         setFormData(prev => ({
           ...prev,
-          zipcode: value,
+          zip: value,
           city: location.city,
           state: location.state
         }))
@@ -143,10 +149,21 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
 
   const handleCaseManagerChange = (index: number, field: keyof CaseManagerData, value: string) => {
     const newCaseManagers = [...caseManagers]
-    newCaseManagers[index] = {
-      ...newCaseManagers[index],
-      [field]: value
+    
+    // Format phone and fax numbers
+    if (field === 'phone' || field === 'faxNumber') {
+      const formattedValue = formatPhoneNumber(value)
+      newCaseManagers[index] = {
+        ...newCaseManagers[index],
+        [field]: formattedValue
+      }
+    } else {
+      newCaseManagers[index] = {
+        ...newCaseManagers[index],
+        [field]: value
+      }
     }
+    
     setCaseManagers(newCaseManagers)
   }
 
@@ -186,23 +203,46 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
         manager.name && manager.email && manager.phone
       )
 
+      const requestData = {
+        name: formData.attorneyName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip: formData.zip,
+        hasLogin: formData.hasLogin,
+        password: formData.password || undefined,
+        caseManagers: validCaseManagers.map(manager => ({
+          name: manager.name,
+          email: manager.email,
+          phone: manager.phone,
+          phoneExt: manager.phoneExt,
+          faxNumber: manager.faxNumber
+        }))
+      }
+
+      console.log('Form Data:', formData)
+      console.log('Request Data:', requestData)
+
       const response = await fetch(`/api/attorneys/${resolvedParams.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          caseManagers: validCaseManagers
-        }),
+        body: JSON.stringify(requestData),
       })
 
+      const data = await response.json()
+      console.log('Response Data:', data)
+
       if (!response.ok) {
-        throw new Error('Failed to update attorney')
+        throw new Error(data.message || 'Failed to update attorney')
       }
 
       router.push('/tools/attorneys')
     } catch (err) {
+      console.error('Error updating attorney:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsLoading(false)
@@ -358,14 +398,14 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
           </div>
 
           <div>
-            <label htmlFor="zipcode" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="zip" className="block text-sm font-medium text-gray-700">
               ZIP Code
             </label>
             <input
               type="text"
-              id="zipcode"
-              name="zipcode"
-              value={formData.zipcode}
+              id="zip"
+              name="zip"
+              value={formData.zip}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="12345"
@@ -472,6 +512,7 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
                         name="phone"
                         value={manager.phone}
                         onChange={(e) => handleCaseManagerChange(index, 'phone', e.target.value)}
+                        placeholder="(555) 555-5555"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
@@ -492,6 +533,7 @@ export default function EditAttorneyPage({ params }: { params: Promise<{ id: str
                         name="faxNumber"
                         value={manager.faxNumber}
                         onChange={(e) => handleCaseManagerChange(index, 'faxNumber', e.target.value)}
+                        placeholder="(555) 555-5555"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>

@@ -17,20 +17,23 @@ export const formatPhoneNumber = (value: string): string => {
 
 export const lookupZipCode = async (zipCode: string): Promise<{ city: string; state: string } | null> => {
   try {
-    const response = await fetch(`https://api.zippopotam.us/us/${zipCode}`)
+    const response = await fetch(`https://api.zippopotam.us/us/${zipCode}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
     if (!response.ok) {
+      console.log('ZIP code lookup failed, returning null')
       return null
     }
-    
     const data = await response.json()
     const place = data.places[0]
-    
     return {
       city: place['place name'],
       state: place.state
     }
   } catch (error) {
-    console.error('Error looking up ZIP code:', error)
+    console.log('Error looking up ZIP code:', error)
     return null
   }
 }

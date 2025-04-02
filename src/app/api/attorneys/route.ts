@@ -93,7 +93,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log('Received attorney creation request:', body)
-    const { name, email, password, hasLogin, phone, faxNumber, address, city, state, zipcode, notes, caseManagers } = body
+    const { name, email, password, hasLogin, phone, faxNumber, address, city, state, zipcode, zip, notes, caseManagers } = body
 
     // Validate required fields
     if (!name || !email) {
@@ -152,7 +152,6 @@ export async function POST(request: Request) {
       console.log('Creating attorney profile with data:', {
         userId: user.id,
         phone,
-        faxNumber,
         address,
         city,
         state,
@@ -164,17 +163,17 @@ export async function POST(request: Request) {
       const attorneyData: Prisma.AttorneyUncheckedCreateInput = {
         userId: user.id,
         phone,
-        faxNumber,
         address,
         city,
         state,
-        zipcode,
-        notes,
+        zip: zipcode || zip,
         barNumber: null,
-        firm: null
+        firstName: name.split(' ')[0] || '',
+        lastName: name.split(' ').slice(1).join(' ') || '',
+        email
       }
 
-      console.log('Creating attorney with data:', attorneyData)
+      console.log('Creating attorney with data:', JSON.stringify(attorneyData, null, 2))
 
       const attorneyProfile = await tx.attorney.create({
         data: attorneyData,
@@ -189,6 +188,8 @@ export async function POST(request: Request) {
         },
       })
 
+      console.log('Attorney profile created:', JSON.stringify(attorneyProfile, null, 2))
+
       // Create case managers if any
       if (caseManagers && caseManagers.length > 0) {
         const validCaseManagers = caseManagers.filter((manager: CaseManagerData) => 
@@ -196,15 +197,14 @@ export async function POST(request: Request) {
         )
 
         if (validCaseManagers.length > 0) {
-          console.log('Creating case managers:', validCaseManagers)
+          console.log('Creating case managers:', JSON.stringify(validCaseManagers, null, 2))
           await tx.caseManager.createMany({
             data: validCaseManagers.map((manager: CaseManagerData) => ({
               attorneyId: attorneyProfile.id,
-              name: manager.name,
+              firstName: manager.name.split(' ')[0] || '',
+              lastName: manager.name.split(' ').slice(1).join(' ') || '',
               email: manager.email,
-              phone: manager.phone,
-              phoneExt: manager.phoneExt || null,
-              faxNumber: manager.faxNumber || null
+              phone: manager.phone
             }))
           })
         }
@@ -213,7 +213,7 @@ export async function POST(request: Request) {
       return attorneyProfile
     })
 
-    console.log('Attorney created successfully:', attorney)
+    console.log('Attorney created successfully:', JSON.stringify(attorney, null, 2))
     return NextResponse.json(attorney)
   } catch (error) {
     console.error('Error creating attorney:', error)
@@ -241,31 +241,30 @@ export async function POST(request: Request) {
 // PUT /api/attorneys/:id - Update an attorney
 export async function PUT(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    // Extract ID from URL path
+    const url = new URL(request.url)
+    const pathParts = url.pathname.split('/')
+    const id = pathParts[pathParts.length - 1]
+    
     if (!id) {
       return NextResponse.json({ message: 'Attorney ID is required' }, { status: 400 })
     }
 
-    const token = request.headers.get('Authorization')?.split(' ')[1]
-    if (!token) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
-    const decoded = jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET!)) as JwtPayload
-    if (decoded.role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-    }
-
     const data = await request.json()
-    const { password, ...attorneyData } = data
+    console.log('Received update request:', data)
+
+    const { password, caseManagers, ...attorneyData } = data
 
     // Start a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Update attorney profile
       const attorney = await tx.attorney.update({
         where: { id },
-        data: attorneyData,
+        data: {
+          ...attorneyData,
+          firstName: attorneyData.name?.split(' ')[0] || '',
+          lastName: attorneyData.name?.split(' ').slice(1).join(' ') || '',
+        },
       })
 
       // If password is provided, update user password
@@ -277,14 +276,45 @@ export async function PUT(request: Request) {
         })
       }
 
+      // Handle case managers if provided
+      if (caseManagers && caseManagers.length > 0) {
+        // Delete existing case managers
+        await tx.caseManager.deleteMany({
+          where: { attorneyId: id }
+        })
+
+        // Create new case managers
+        const validCaseManagers = caseManagers.filter((manager: CaseManagerData) => 
+          manager.name && manager.email && manager.phone
+        )
+
+        if (validCaseManagers.length > 0) {
+          await tx.caseManager.createMany({
+            data: validCaseManagers.map((manager: CaseManagerData) => ({
+              attorneyId: id,
+              firstName: manager.name.split(' ')[0] || '',
+              lastName: manager.name.split(' ').slice(1).join(' ') || '',
+              email: manager.email,
+              phone: manager.phone
+            }))
+          })
+        }
+      }
+
       return attorney
     })
 
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error updating attorney:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { message: `Database error: ${error.message}` },
+        { status: 400 }
+      )
+    }
     return NextResponse.json(
-      { message: 'Failed to update attorney' },
+      { message: error instanceof Error ? error.message : 'Failed to update attorney' },
       { status: 500 }
     )
   }

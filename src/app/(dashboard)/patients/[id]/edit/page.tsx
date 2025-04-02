@@ -126,7 +126,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   const [exams, setExams] = useState<Exam[]>([])
   const [attorneys, setAttorneys] = useState<Attorney[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [patientData, setPatientData] = useState<any>(null)
 
   useEffect(() => {
@@ -193,12 +193,17 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
       if (!response.ok) {
         throw new Error('Failed to fetch doctors')
       }
-      const data = await response.json()
-      console.log('Fetched doctors:', data)
-      setDoctors(data)
+      const result = await response.json()
+      console.log('Fetched doctors:', result)
+      if (result.data) {
+        setDoctors(result.data)
+      } else {
+        setDoctors([])
+      }
     } catch (error) {
       console.error('Error fetching doctors:', error)
       setError('Failed to load doctors')
+      setDoctors([])
     }
   }
 
