@@ -36,13 +36,13 @@ interface Exam {
 
 interface Procedure {
   examId: string
-  scheduleDate: string
-  scheduleTime: string
-  facilityId: string
-  physicianId: string
   statusId: string
-  lop: string
-  isCompleted: boolean
+  scheduleDate?: string
+  scheduleTime?: string
+  facilityId?: string
+  physicianId?: string
+  lop?: string
+  isCompleted?: boolean
 }
 
 interface Attorney {
@@ -195,6 +195,55 @@ export default function AddPatientPage() {
     return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
   }
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return ''
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ''
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const day = date.getDate().toString().padStart(2, '0')
+      const year = date.getFullYear()
+      return `${month}/${day}/${year}`
+    } catch (error) {
+      console.error('Error formatting date:', error)
+      return ''
+    }
+  }
+
+  const parseDate = (dateString: string) => {
+    if (!dateString) return null
+    
+    try {
+      const [month, day, year] = dateString.split('/')
+      const monthNum = parseInt(month)
+      const dayNum = parseInt(day)
+      const yearNum = parseInt(year)
+
+      // Validate date components
+      if (isNaN(monthNum) || isNaN(dayNum) || isNaN(yearNum)) {
+        return null
+      }
+
+      // Validate ranges
+      if (monthNum < 1 || monthNum > 12) return null
+      if (dayNum < 1 || dayNum > 31) return null
+      if (yearNum < 1900 || yearNum > 2100) return null
+
+      const date = new Date(yearNum, monthNum - 1, dayNum)
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return null
+      }
+
+      // Return date in ISO format with time set to midnight UTC
+      return new Date(Date.UTC(yearNum, monthNum - 1, dayNum)).toISOString()
+    } catch (error) {
+      console.error('Error parsing date:', error)
+      return null
+    }
+  }
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -208,44 +257,7 @@ export default function AddPatientPage() {
 
     // Format dates
     if (name === 'dateOfBirth' || name === 'doidol' || name === 'orderDate') {
-      // Remove any non-numeric characters
-      const numbers = value.replace(/\D/g, '').slice(0, 8) // Limit to 8 digits
-      
-      // Format as MM/DD/YYYY
-      if (numbers.length <= 2) {
-        formattedValue = numbers
-      } else if (numbers.length <= 4) {
-        const month = numbers.slice(0, 2)
-        // Validate month (01-12)
-        if (parseInt(month) > 12) {
-          formattedValue = '12/' + numbers.slice(2)
-        } else {
-          formattedValue = `${month}/${numbers.slice(2)}`
-        }
-      } else {
-        const month = numbers.slice(0, 2)
-        const day = numbers.slice(2, 4)
-        const year = numbers.slice(4, 8)
-        
-        // Validate month (01-12)
-        if (parseInt(month) > 12) {
-          formattedValue = '12'
-        } else {
-          formattedValue = month
-        }
-        
-        // Validate day (01-31)
-        if (parseInt(day) > 31) {
-          formattedValue += '/31'
-        } else {
-          formattedValue += `/${day}`
-        }
-        
-        // Add year if exists
-        if (year) {
-          formattedValue += `/${year}`
-        }
-      }
+      formattedValue = formatDate(value)
     }
 
     setFormData(prev => ({
@@ -261,11 +273,11 @@ export default function AddPatientPage() {
         ...prev.procedures,
         {
           examId: '',
+          statusId: '',
           scheduleDate: '',
           scheduleTime: '',
           facilityId: '',
           physicianId: '',
-          statusId: '',
           lop: '',
           isCompleted: false
         }
@@ -283,9 +295,61 @@ export default function AddPatientPage() {
   const updateProcedure = (index: number, field: keyof Procedure, value: any) => {
     setFormData(prev => ({
       ...prev,
-      procedures: prev.procedures.map((proc, i) => 
-        i === index ? { ...proc, [field]: value } : proc
-      )
+      procedures: prev.procedures.map((proc, i) => {
+        if (i !== index) return proc
+        
+        // Special handling for scheduleDate
+        if (field === 'scheduleDate') {
+          // If the value is coming from the date picker, it's already in YYYY-MM-DD format
+          if (value.includes('-')) {
+            const [year, month, day] = value.split('-')
+            return { ...proc, [field]: `${month}/${day}/${year}` }
+          }
+          
+          // Otherwise, handle manual input
+          const numbers = value.replace(/\D/g, '').slice(0, 8)
+          
+          // Format as MM/DD/YYYY
+          let formattedValue = ''
+          if (numbers.length <= 2) {
+            formattedValue = numbers
+          } else if (numbers.length <= 4) {
+            const month = numbers.slice(0, 2)
+            // Validate month (01-12)
+            if (parseInt(month) > 12) {
+              formattedValue = '12/' + numbers.slice(2)
+            } else {
+              formattedValue = `${month}/${numbers.slice(2)}`
+            }
+          } else {
+            const month = numbers.slice(0, 2)
+            const day = numbers.slice(2, 4)
+            const year = numbers.slice(4, 8)
+            
+            // Validate month (01-12)
+            if (parseInt(month) > 12) {
+              formattedValue = '12'
+            } else {
+              formattedValue = month
+            }
+            
+            // Validate day (01-31)
+            if (parseInt(day) > 31) {
+              formattedValue += '/31'
+            } else {
+              formattedValue += `/${day}`
+            }
+            
+            // Add year if exists
+            if (year) {
+              formattedValue += `/${year}`
+            }
+          }
+          return { ...proc, [field]: formattedValue }
+        }
+        
+        return { ...proc, [field]: value }
+      })
     }))
   }
 
@@ -294,35 +358,70 @@ export default function AddPatientPage() {
     setLoading(true)
     setError('')
 
-    // Validate required fields
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.payerId || !formData.statusId) {
-      setError('First name, last name, payer, and status are required')
-      setLoading(false)
-      return
-    }
-
-    // Validate procedures
-    for (const proc of formData.procedures) {
-      if (!proc.examId || !proc.scheduleDate || !proc.scheduleTime || !proc.facilityId || !proc.physicianId || !proc.statusId) {
-        setError('All procedure fields are required')
+    try {
+      // Validate required fields
+      if (!formData.firstName?.trim() || !formData.lastName?.trim()) {
+        setError('First name and last name are required')
         setLoading(false)
         return
       }
-    }
 
-    try {
+      if (!formData.procedures || formData.procedures.length === 0) {
+        setError('At least one procedure is required')
+        setLoading(false)
+        return
+      }
+
+      // Validate each procedure
+      for (const proc of formData.procedures) {
+        if (!proc.examId || !proc.statusId) {
+          setError('Exam and status are required for each procedure')
+          setLoading(false)
+          return
+        }
+      }
+
+      // Parse dates before sending
+      const submissionData = {
+        ...formData,
+        phone: formData.phone?.trim() || '', // Ensure phone is never null
+        dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : new Date().toISOString(),
+        doidol: formData.doidol ? new Date(formData.doidol).toISOString() : null,
+        orderDate: formData.orderDate ? new Date(formData.orderDate).toISOString() : null,
+        lawyer: formData.attorneyId ? attorneys.find(a => a.id === formData.attorneyId)?.user.name || '' : '',
+        attorneyId: undefined,
+        referringDoctorId: undefined,
+        referringDoctor: undefined,
+        procedures: formData.procedures.map(proc => ({
+          ...proc,
+          scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate).toISOString() : new Date().toISOString(),
+          scheduleTime: proc.scheduleTime || '00:00',
+          facilityId: proc.facilityId || undefined,
+          physicianId: proc.physicianId || undefined,
+          lop: proc.lop || '',
+          isCompleted: proc.isCompleted || false
+        }))
+      }
+
+      console.log('Submitting patient data:', JSON.stringify(submissionData, null, 2))
+
       const response = await fetch('/api/patients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       })
 
       const data = await response.json()
+      console.log('API Response:', {
+        status: response.status,
+        ok: response.ok,
+        data: data
+      })
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create patient')
+        throw new Error(data.error || 'Failed to create patient')
       }
 
       router.push('/patients')
@@ -404,7 +503,7 @@ export default function AddPatientPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Date of Birth *
+                      Date of Birth
                     </label>
                     <div className="relative">
                       <input
@@ -416,7 +515,6 @@ export default function AddPatientPage() {
                         pattern="\d{2}/\d{2}/\d{4}"
                         maxLength={10}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       />
                       <button
                         type="button"
@@ -449,7 +547,7 @@ export default function AddPatientPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Phone *
+                      Phone
                     </label>
                     <input
                       type="tel"
@@ -457,7 +555,6 @@ export default function AddPatientPage() {
                       value={formData.phone}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     />
                   </div>
 
@@ -533,14 +630,13 @@ export default function AddPatientPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Gender *
+                      Gender
                     </label>
                     <select
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     >
                       <option value="unknown">Select Gender</option>
                       <option value="male">Male</option>
@@ -551,7 +647,7 @@ export default function AddPatientPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Address *
+                      Address
                     </label>
                     <input
                       type="text"
@@ -559,13 +655,12 @@ export default function AddPatientPage() {
                       value={formData.address}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      City *
+                      City
                     </label>
                     <input
                       type="text"
@@ -573,13 +668,12 @@ export default function AddPatientPage() {
                       value={formData.city}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      ZIP Code *
+                      ZIP Code
                     </label>
                     <input
                       type="text"
@@ -587,20 +681,18 @@ export default function AddPatientPage() {
                       value={formData.zip}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Status *
+                      Status
                     </label>
                     <select
                       name="statusId"
                       value={formData.statusId}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     >
                       <option value="">Select Status</option>
                       {statuses.map((status) => (
@@ -613,14 +705,13 @@ export default function AddPatientPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Payer *
+                      Payer
                     </label>
                     <select
                       name="payerId"
                       value={formData.payerId}
                       onChange={handleChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
                     >
                       <option value="">Select Payer</option>
                       {payers.map((payer) => (
@@ -757,7 +848,7 @@ export default function AddPatientPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          Exam *
+                          Exam Name *
                         </label>
                         <select
                           value={procedure.examId}
@@ -776,7 +867,7 @@ export default function AddPatientPage() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          Schedule Date *
+                          Schedule Date
                         </label>
                         <div className="relative">
                           <input
@@ -785,8 +876,8 @@ export default function AddPatientPage() {
                             onChange={(e) => updateProcedure(index, 'scheduleDate', e.target.value)}
                             placeholder="MM/DD/YYYY"
                             pattern="\d{2}/\d{2}/\d{4}"
+                            maxLength={10}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            required
                           />
                           <button
                             type="button"
@@ -816,26 +907,24 @@ export default function AddPatientPage() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          Schedule Time *
+                          Schedule Time
                         </label>
                         <input
                           type="time"
                           value={procedure.scheduleTime}
                           onChange={(e) => updateProcedure(index, 'scheduleTime', e.target.value)}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
                         />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          Facility *
+                          Facility
                         </label>
                         <select
                           value={procedure.facilityId}
                           onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
                         >
                           <option value="">Select Facility</option>
                           {facilities.map((facility) => (
@@ -848,13 +937,12 @@ export default function AddPatientPage() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          Physician *
+                          Physician
                         </label>
                         <select
                           value={procedure.physicianId}
                           onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
                         >
                           <option value="">Select Physician</option>
                           {physicians.map((physician) => (

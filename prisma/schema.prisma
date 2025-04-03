@@ -19,6 +19,7 @@ model User {
   updatedAt       DateTime  @updatedAt
   attorney        Attorney?
   assignedTasks   Task[]
+  events          Event[]
 }
 
 model Attorney {
@@ -94,6 +95,7 @@ model Patient {
   appointments    Appointment[]
   cases           Case[]
   procedures      Procedure[]
+  events          Event[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -227,4 +229,32 @@ model Procedure {
   isCompleted   Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model ExamType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  duration    Int      // Duration in minutes
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  start       DateTime
+  end         DateTime
+  description String?
+  type        String    @default("meeting")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  assignedToId String?
+  assignedTo  User?     @relation(fields: [assignedToId], references: [id])
+  examTypeId  String?
+  examType    ExamType? @relation(fields: [examTypeId], references: [id])
+  patientId   String?
+  patient     Patient?  @relation(fields: [patientId], references: [id])
+  status      String    @default("scheduled") // scheduled, completed, cancelled
 } 

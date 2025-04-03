@@ -140,11 +140,17 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return ''
-    const date = new Date(dateString)
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const day = date.getDate().toString().padStart(2, '0')
-    const year = date.getFullYear()
-    return `${month}/${day}/${year}`
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ''
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const day = date.getDate().toString().padStart(2, '0')
+      const year = date.getFullYear()
+      return `${month}/${day}/${year}`
+    } catch (error) {
+      console.error('Error formatting date:', error)
+      return ''
+    }
   }
 
   const parseDate = (dateString: string) => {
@@ -173,7 +179,8 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         return null
       }
 
-      return date.toISOString()
+      // Return date in ISO format with time set to midnight UTC
+      return new Date(Date.UTC(yearNum, monthNum - 1, dayNum)).toISOString()
     } catch (error) {
       console.error('Error parsing date:', error)
       return null
@@ -395,9 +402,55 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   const updateProcedure = (index: number, field: keyof Procedure, value: any) => {
     setFormData(prev => ({
       ...prev,
-      procedures: prev.procedures.map((proc, i) => 
-        i === index ? { ...proc, [field]: value } : proc
-      )
+      procedures: prev.procedures.map((proc, i) => {
+        if (i !== index) return proc
+        
+        // Special handling for scheduleDate
+        if (field === 'scheduleDate') {
+          // Remove any non-numeric characters
+          const numbers = value.replace(/\D/g, '').slice(0, 8)
+          
+          // Format as MM/DD/YYYY
+          let formattedValue = ''
+          if (numbers.length <= 2) {
+            formattedValue = numbers
+          } else if (numbers.length <= 4) {
+            const month = numbers.slice(0, 2)
+            // Validate month (01-12)
+            if (parseInt(month) > 12) {
+              formattedValue = '12/' + numbers.slice(2)
+            } else {
+              formattedValue = `${month}/${numbers.slice(2)}`
+            }
+          } else {
+            const month = numbers.slice(0, 2)
+            const day = numbers.slice(2, 4)
+            const year = numbers.slice(4, 8)
+            
+            // Validate month (01-12)
+            if (parseInt(month) > 12) {
+              formattedValue = '12'
+            } else {
+              formattedValue = month
+            }
+            
+            // Validate day (01-31)
+            if (parseInt(day) > 31) {
+              formattedValue += '/31'
+            } else {
+              formattedValue += `/${day}`
+            }
+            
+            // Add year if exists
+            if (year) {
+              formattedValue += `/${year}`
+            }
+          }
+          return { ...proc, [field]: formattedValue }
+        }
+        
+        return { ...proc, [field]: value }
+      })
     }))
   }
 
@@ -405,16 +458,52 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
     e.preventDefault()
     if (!formData) return
 
-    // Validate required fields
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.payerId || !formData.statusId) {
-      setError('First name, last name, payer, and status are required')
+    // Validate required patient fields
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError('First name and last name are required')
+      return
+    }
+
+    if (!formData.dateOfBirth) {
+      setError('Date of birth is required')
+      return
+    }
+
+    if (!formData.phone?.trim()) {
+      setError('Phone number is required')
       return
     }
 
     // Validate procedures
+    if (formData.procedures.length === 0) {
+      setError('At least one procedure is required')
+      return
+    }
+
+    // Validate each procedure
     for (const proc of formData.procedures) {
-      if (!proc.examId || !proc.scheduleDate || !proc.scheduleTime || !proc.facilityId || !proc.physicianId || !proc.statusId) {
-        setError('All procedure fields are required')
+      if (!proc.examId || !proc.statusId) {
+        setError('Exam name and status are required for all procedures')
+        return
+      }
+
+      if (!proc.scheduleDate) {
+        setError('Schedule date is required for all procedures')
+        return
+      }
+
+      if (!proc.scheduleTime?.trim()) {
+        setError('Schedule time is required for all procedures')
+        return
+      }
+
+      if (!proc.facilityId) {
+        setError('Facility is required for all procedures')
+        return
+      }
+
+      if (!proc.physicianId) {
+        setError('Physician is required for all procedures')
         return
       }
     }
@@ -428,22 +517,23 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
       const parsedDoidol = formData.doidol ? parseDate(formData.doidol) : null
       const parsedOrderDate = formData.orderDate ? parseDate(formData.orderDate) : null
 
-      // Validate required date
-      if (!parsedDateOfBirth) {
-        setError('Invalid date of birth format. Please use MM/DD/YYYY')
-        return
-      }
-
       const submissionData = {
         ...formData,
         dateOfBirth: parsedDateOfBirth,
         doidol: parsedDoidol,
         orderDate: parsedOrderDate,
+        statusId: formData.statusId || undefined,
+        payerId: formData.payerId || undefined,
+        gender: formData.gender === 'unknown' ? undefined : formData.gender,
         procedures: formData.procedures.map(proc => ({
           ...proc,
-          scheduleDate: parseDate(proc.scheduleDate)
+          scheduleDate: proc.scheduleDate ? parseDate(proc.scheduleDate) : null,
+          facilityId: proc.facilityId || undefined,
+          physicianId: proc.physicianId || undefined
         }))
       }
+
+      console.log('Submitting data:', submissionData)
 
       const response = await fetch(`/api/patients/${resolvedParams.id}`, {
         method: 'PUT',
@@ -454,13 +544,41 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update patient')
+        let errorMessage = 'Failed to update patient';
+        try {
+          const errorData = await response.json();
+          console.error('Server response:', errorData);
+          if (errorData && errorData.message) {
+            errorMessage = errorData.message;
+          } else {
+            // If the response is empty or doesn't have a message, use the status text
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        } catch (parseError) {
+          console.error('Error parsing server response:', parseError);
+          // If we can't parse the JSON, try to get the text
+          try {
+            const textError = await response.text();
+            console.error('Server response text:', textError);
+            if (textError) {
+              errorMessage = `Server error: ${textError}`;
+            } else {
+              // If the text is empty, use the status text
+              errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+          } catch (textError) {
+            console.error('Error getting response text:', textError);
+            // If all else fails, use the status text
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       router.push('/patients')
     } catch (err) {
       console.error('Error updating patient:', err)
-      setError('Failed to update patient')
+      setError(err instanceof Error ? err.message : 'Failed to update patient')
     } finally {
       setLoading(false)
     }
@@ -587,12 +705,12 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </label>
                       <input
                         type="text"
-                        name="firstName"
                         id="firstName"
+                        name="firstName"
                         value={formData.firstName}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         required
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                     </div>
 
@@ -616,12 +734,12 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </label>
                       <input
                         type="text"
-                        name="lastName"
                         id="lastName"
+                        name="lastName"
                         value={formData.lastName}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         required
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                     </div>
 
@@ -631,15 +749,13 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </label>
                       <input
                         type="text"
-                        name="dateOfBirth"
                         id="dateOfBirth"
+                        name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleChange}
-                        placeholder="MM/DD/YYYY"
-                        pattern="\d{2}/\d{2}/\d{4}"
-                        maxLength={10}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         required
+                        placeholder="MM/DD/YYYY"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                     </div>
 
@@ -649,12 +765,12 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </label>
                       <input
                         type="tel"
-                        name="phone"
                         id="phone"
+                        name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         required
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                     </div>
 
@@ -705,7 +821,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
                     <div className="sm:col-span-3">
                       <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-                        Gender *
+                        Gender
                       </label>
                       <select
                         name="gender"
@@ -713,7 +829,6 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                         value={formData.gender}
                         onChange={handleChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       >
                         <option value="unknown">Select Gender</option>
                         <option value="male">Male</option>
@@ -724,7 +839,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
                     <div className="sm:col-span-6">
                       <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                        Address *
+                        Address
                       </label>
                       <input
                         type="text"
@@ -733,13 +848,12 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                         value={formData.address}
                         onChange={handleChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       />
                     </div>
 
                     <div className="sm:col-span-3">
                       <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                        City *
+                        City
                       </label>
                       <input
                         type="text"
@@ -748,13 +862,12 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                         value={formData.city}
                         onChange={handleChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       />
                     </div>
 
                     <div className="sm:col-span-3">
                       <label htmlFor="zip" className="block text-sm font-medium text-gray-700">
-                        ZIP Code *
+                        ZIP Code
                       </label>
                       <input
                         type="text"
@@ -763,13 +876,12 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                         value={formData.zip}
                         onChange={handleChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       />
                     </div>
 
                     <div className="sm:col-span-3">
                       <label htmlFor="statusId" className="block text-sm font-medium text-gray-700">
-                        Status *
+                        Status
                       </label>
                       <select
                         name="statusId"
@@ -777,7 +889,6 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                         value={formData.statusId}
                         onChange={handleChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       >
                         <option value="">Select Status</option>
                         {statuses.map((status) => (
@@ -790,7 +901,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
                     <div className="sm:col-span-3">
                       <label htmlFor="payerId" className="block text-sm font-medium text-gray-700">
-                        Payer *
+                        Payer
                       </label>
                       <select
                         name="payerId"
@@ -798,7 +909,6 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                         value={formData.payerId}
                         onChange={handleChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        required
                       >
                         <option value="">Select Payer</option>
                         {payers.map((payer) => (
@@ -911,14 +1021,16 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Exam *
+                        <label htmlFor={`procedures.${index}.examId`} className="block text-sm font-medium text-gray-700">
+                          Exam Name *
                         </label>
                         <select
+                          id={`procedures.${index}.examId`}
+                          name={`procedures.${index}.examId`}
                           value={procedure.examId}
                           onChange={(e) => updateProcedure(index, 'examId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           required
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                           <option value="">Select Exam</option>
                           {exams.map((exam) => (
@@ -930,40 +1042,48 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`procedures.${index}.scheduleDate`} className="block text-sm font-medium text-gray-700">
                           Schedule Date *
                         </label>
                         <input
-                          type="date"
+                          type="text"
+                          id={`procedures.${index}.scheduleDate`}
+                          name={`procedures.${index}.scheduleDate`}
                           value={procedure.scheduleDate}
                           onChange={(e) => updateProcedure(index, 'scheduleDate', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           required
+                          placeholder="MM/DD/YYYY"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`procedures.${index}.scheduleTime`} className="block text-sm font-medium text-gray-700">
                           Schedule Time *
                         </label>
                         <input
-                          type="time"
+                          type="text"
+                          id={`procedures.${index}.scheduleTime`}
+                          name={`procedures.${index}.scheduleTime`}
                           value={procedure.scheduleTime}
                           onChange={(e) => updateProcedure(index, 'scheduleTime', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           required
+                          placeholder="HH:MM AM/PM"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`procedures.${index}.facilityId`} className="block text-sm font-medium text-gray-700">
                           Facility *
                         </label>
                         <select
+                          id={`procedures.${index}.facilityId`}
+                          name={`procedures.${index}.facilityId`}
                           value={procedure.facilityId}
                           onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           required
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                           <option value="">Select Facility</option>
                           {facilities.map((facility) => (
@@ -975,33 +1095,37 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`procedures.${index}.physicianId`} className="block text-sm font-medium text-gray-700">
                           Physician *
                         </label>
                         <select
+                          id={`procedures.${index}.physicianId`}
+                          name={`procedures.${index}.physicianId`}
                           value={procedure.physicianId}
                           onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           required
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                           <option value="">Select Physician</option>
                           {physicians.map((physician) => (
                             <option key={physician.id} value={physician.id}>
-                              {physician.prefix} {physician.name} {physician.suffix}
+                              {physician.name}
                             </option>
                           ))}
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`procedures.${index}.statusId`} className="block text-sm font-medium text-gray-700">
                           Status *
                         </label>
                         <select
+                          id={`procedures.${index}.statusId`}
+                          name={`procedures.${index}.statusId`}
                           value={procedure.statusId}
                           onChange={(e) => updateProcedure(index, 'statusId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           required
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                           <option value="">Select Status</option>
                           {statuses.map((status) => (

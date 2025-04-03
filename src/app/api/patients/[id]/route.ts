@@ -53,9 +53,21 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  console.log('PUT request received for patient ID:', params.id);
+  
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      console.log('Unauthorized request - no session found');
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
     const id = await Promise.resolve(params.id)
     const body = await request.json()
+    
+    console.log('Received update request for patient:', id)
+    console.log('Request body:', JSON.stringify(body, null, 2))
+
     const {
       firstName,
       middleName,
@@ -80,25 +92,93 @@ export async function PUT(
     } = body
 
     // Validate required fields
-    if (!firstName?.trim() || !lastName?.trim() || !payerId || !statusId) {
+    if (!firstName?.trim() || !lastName?.trim()) {
       return NextResponse.json(
-        { message: 'First name, last name, payer, and status are required' },
+        { message: 'First name and last name are required' },
         { status: 400 }
       )
+    }
+
+    if (!dateOfBirth) {
+      return NextResponse.json(
+        { message: 'Date of birth is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!phone?.trim()) {
+      return NextResponse.json(
+        { message: 'Phone number is required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate procedures if provided
+    if (procedures) {
+      if (!Array.isArray(procedures)) {
+        return NextResponse.json(
+          { message: 'Procedures must be an array' },
+          { status: 400 }
+        )
+      }
+
+      for (const proc of procedures) {
+        if (!proc.examId || !proc.statusId) {
+          return NextResponse.json(
+            { message: 'Each procedure must have an exam and status' },
+            { status: 400 }
+          )
+        }
+
+        if (!proc.scheduleDate) {
+          return NextResponse.json(
+            { message: 'Schedule date is required for all procedures' },
+            { status: 400 }
+          )
+        }
+
+        if (!proc.scheduleTime?.trim()) {
+          return NextResponse.json(
+            { message: 'Schedule time is required for all procedures' },
+            { status: 400 }
+          )
+        }
+
+        if (!proc.facilityId) {
+          return NextResponse.json(
+            { message: 'Facility is required for all procedures' },
+            { status: 400 }
+          )
+        }
+
+        if (!proc.physicianId) {
+          return NextResponse.json(
+            { message: 'Physician is required for all procedures' },
+            { status: 400 }
+          )
+        }
+
+        if (proc.scheduleDate && isNaN(new Date(proc.scheduleDate).getTime())) {
+          return NextResponse.json(
+            { message: 'Invalid schedule date format' },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Set default values for required fields
     const updateData: Prisma.PatientUpdateInput = {
       firstName: firstName.trim(),
-      middleName: middleName?.trim() || '',
+      middleName: middleName?.trim() || null,
       lastName: lastName.trim(),
-      phone: phone?.trim() || '',
-      altNumber: altNumber?.trim() || '',
-      email: email?.trim() || '',
-      gender: gender || 'unknown',
-      address: address?.trim() || '',
-      city: city?.trim() || '',
-      zip: zip?.trim() || '',
+      phone: phone?.trim() || null,
+      altNumber: altNumber?.trim() || null,
+      email: email?.trim() || null,
+      gender: gender || null,
+      address: address?.trim() || null,
+      city: city?.trim() || null,
+      zip: zip?.trim() || null,
       status: statusId ? {
         connect: { id: statusId }
       } : undefined,
@@ -106,7 +186,7 @@ export async function PUT(
         connect: { id: payerId }
       } : undefined,
       lawyer: lawyer?.trim() || null,
-      orderFor: orderFor?.trim() || '',
+      orderFor: orderFor?.trim() || null,
     }
 
     // Update dates if provided
@@ -124,9 +204,13 @@ export async function PUT(
       }
     }
 
+    console.log('Update data:', updateData)
+
     // Start a transaction to update patient and procedures
+    console.log('Starting transaction to update patient and procedures');
     const patient = await prisma.$transaction(async (tx) => {
       try {
+        console.log('Updating patient with data:', updateData);
         // Update patient
         const updatedPatient = await tx.patient.update({
           where: { id },
@@ -145,55 +229,73 @@ export async function PUT(
             payer: true,
           },
         })
+        console.log('Patient updated successfully:', updatedPatient.id);
 
         // Handle procedures if provided
         if (procedures && procedures.length > 0) {
+          console.log(`Deleting ${procedures.length} existing procedures`);
           // Delete existing procedures
           await tx.procedure.deleteMany({
             where: { patientId: id }
           })
+          console.log('Existing procedures deleted successfully');
 
           // Create new procedures
           for (const proc of procedures) {
-            // Skip if required IDs are missing or invalid
-            if (!proc.examId || !proc.facilityId || !proc.physicianId || !proc.statusId) {
-              console.warn('Skipping procedure creation due to missing required IDs:', proc)
-              continue
-            }
-
             try {
-              await tx.procedure.create({
-                data: {
-                  patient: {
-                    connect: { id }
-                  },
-                  exam: {
-                    connect: { id: proc.examId.toString() }
-                  },
-                  scheduleDate: new Date(proc.scheduleDate),
-                  scheduleTime: proc.scheduleTime || '',
-                  facility: {
-                    connect: { id: proc.facilityId.toString() }
-                  },
-                  physician: {
-                    connect: { id: proc.physicianId.toString() }
-                  },
-                  status: {
-                    connect: { id: proc.statusId.toString() }
-                  },
-                  lop: proc.lop || null,
-                  isCompleted: proc.isCompleted || false
+              console.log('Processing procedure:', proc);
+              
+              // Validate required fields
+              if (!proc.examId) {
+                throw new Error('Exam ID is required for each procedure');
+              }
+              if (!proc.statusId) {
+                throw new Error('Status ID is required for each procedure');
+              }
+              
+              const procedureData: any = {
+                patient: {
+                  connect: { id }
+                },
+                exam: {
+                  connect: { id: proc.examId.toString() }
+                },
+                scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate) : null,
+                scheduleTime: proc.scheduleTime || '',
+                status: {
+                  connect: { id: proc.statusId.toString() }
+                },
+                lop: proc.lop || null,
+                isCompleted: proc.isCompleted || false
+              }
+
+              // Only add facility if provided
+              if (proc.facilityId) {
+                procedureData.facility = {
+                  connect: { id: proc.facilityId.toString() }
                 }
+              }
+
+              // Only add physician if provided
+              if (proc.physicianId) {
+                procedureData.physician = {
+                  connect: { id: proc.physicianId.toString() }
+                }
+              }
+
+              console.log('Creating procedure with data:', procedureData)
+              const createdProcedure = await tx.procedure.create({
+                data: procedureData
               })
+              console.log('Procedure created successfully:', createdProcedure.id);
             } catch (error) {
               console.error('Error creating procedure:', error, 'Procedure data:', proc)
-              if (error instanceof Error) {
-                throw new Error(`Failed to create procedure: ${error.message}`)
-              } else {
-                throw new Error('Failed to create procedure: Unknown error')
-              }
+              throw new Error(`Failed to create procedure: ${error instanceof Error ? error.message : 'Unknown error'}`)
             }
           }
+          console.log('All procedures created successfully');
+        } else {
+          console.log('No procedures to create');
         }
 
         return updatedPatient
@@ -202,25 +304,29 @@ export async function PUT(
         throw error
       }
     })
+    console.log('Transaction completed successfully');
 
     return NextResponse.json(patient)
   } catch (error) {
     console.error('Error updating patient:', error)
+    
+    // Ensure we always return a properly formatted error response
+    let errorMessage = 'Error updating patient. Please try again.';
+    let statusCode = 500;
+    
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return NextResponse.json(
-        { message: `Database error: ${error.message}` },
-        { status: 400 }
-      )
+      errorMessage = `Database error: ${error.message}`;
+      statusCode = 400;
+    } else if (error instanceof Prisma.PrismaClientValidationError) {
+      errorMessage = `Validation error: ${error.message}`;
+      statusCode = 400;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
     }
-    if (error instanceof Prisma.PrismaClientValidationError) {
-      return NextResponse.json(
-        { message: `Validation error: ${error.message}` },
-        { status: 400 }
-      )
-    }
+    
     return NextResponse.json(
-      { message: 'Error updating patient. Please try again.' },
-      { status: 500 }
+      { message: errorMessage },
+      { status: statusCode }
     )
   } finally {
     await prisma.$disconnect()

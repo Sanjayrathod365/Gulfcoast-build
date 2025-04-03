@@ -6,91 +6,295 @@ import { Prisma } from '@prisma/client'
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const patients = await prisma.patient.findMany({
+      orderBy: [
+        { lastName: "asc" },
+        { firstName: "asc" }
+      ],
       include: {
         status: true,
         payer: true,
-        appointments: true,
-        cases: true,
         procedures: {
           include: {
             exam: true,
-            facility: true,
-            physician: true,
-            status: true,
+            status: true
           },
           orderBy: {
-            scheduleDate: 'desc',
-          },
+            scheduleDate: 'desc'
+          }
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
       }
     })
 
-    return NextResponse.json(patients)
+    // Transform the data to match our frontend expectations
+    const transformedPatients = patients.map(patient => {
+      return {
+        id: patient.id,
+        name: `${patient.firstName} ${patient.lastName}`,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth ? formatDate(patient.dateOfBirth) : 'Invalid Date',
+        contact: patient.phone || patient.email || '-',
+        status: {
+          name: patient.status?.name || 'New',
+          color: patient.status?.color || 'gray'
+        },
+        payer: patient.payer?.name || 'No Payer',
+        procedures: patient.procedures.map(procedure => ({
+          id: procedure.id,
+          exam: procedure.exam.name,
+          status: {
+            name: procedure.status.name,
+            color: procedure.status.color
+          },
+          date: procedure.scheduleDate ? formatDate(procedure.scheduleDate) : '-'
+        })),
+        email: patient.email,
+        phone: patient.phone,
+        address: patient.address,
+        city: patient.city,
+        zip: patient.zip
+      }
+    })
+
+    return NextResponse.json(transformedPatients)
   } catch (error) {
-    console.error('Error fetching patients:', error)
-    return NextResponse.json(
-      { message: 'Error fetching patients' },
-      { status: 500 }
-    )
+    console.error("[PATIENTS_GET]", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+interface Procedure {
+  examId: string
+  statusId: string
+  scheduleDate?: string
+  scheduleTime?: string
+  facilityId?: string
+  physicianId?: string
+  lop?: string | null
+  isCompleted?: boolean
+  status?: {
+    name: string
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const data = await request.json()
+    console.log('Received request body:', JSON.stringify(data, null, 2))
 
-    const createData: Prisma.PatientCreateInput = {
-      firstName: data.firstName,
-      middleName: data.middleName || null,
-      lastName: data.lastName,
-      dateOfBirth: new Date(data.dateOfBirth),
-      phone: data.phone,
-      altNumber: data.altNumber || null,
-      email: data.email || null,
-      gender: data.gender || null,
-      address: data.address || null,
-      city: data.city || null,
-      zip: data.zip || null,
-      lawyer: data.lawyer || null,
-      orderDate: data.orderDate ? new Date(data.orderDate) : new Date(),
-      orderFor: data.orderFor || null,
-      ...(data.statusId && {
-        status: {
-          connect: { id: data.statusId }
-        }
-      }),
-      ...(data.payerId && {
-        payer: {
-          connect: { id: data.payerId }
-        }
-      })
+    // Validate required fields
+    if (!data.firstName || !data.lastName) {
+      return NextResponse.json(
+        { error: 'First name and last name are required' },
+        { status: 400 }
+      )
     }
 
+    if (!data.procedures || data.procedures.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one procedure is required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate each procedure
+    for (const proc of data.procedures) {
+      if (!proc.examId || !proc.statusId) {
+        return NextResponse.json(
+          { error: 'Exam and status are required for each procedure' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Check if default facility exists, if not create it
+    let defaultFacilityId = '67ed260cc52a7fd85d24a7a1'
+    try {
+      const facilityExists = await prisma.facility.findUnique({
+        where: { id: defaultFacilityId }
+      })
+      
+      if (!facilityExists) {
+        try {
+          const newFacility = await prisma.facility.create({
+            data: {
+              name: 'Default Facility',
+              address: 'Default Address',
+              city: 'Default City',
+              state: 'Default State',
+              zip: '00000',
+              phone: '000-000-0000',
+              status: 'active'
+            }
+          })
+          defaultFacilityId = newFacility.id
+        } catch (createError) {
+          console.error('Error creating default facility:', createError)
+          
+          // If creation fails, try to find an existing facility to use
+          const existingFacility = await prisma.facility.findFirst({
+            where: { status: 'active' }
+          })
+          
+          if (existingFacility) {
+            defaultFacilityId = existingFacility.id
+          } else {
+            return NextResponse.json(
+              { error: 'Failed to create default facility and no existing facility found' },
+              { status: 500 }
+            )
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking/creating default facility:', error)
+      return NextResponse.json(
+        { error: 'Failed to create default facility' },
+        { status: 500 }
+      )
+    }
+
+    // Check if default physician exists, if not create it
+    let defaultPhysicianId = '67ed260cc52a7fd85d24a7a2'
+    try {
+      const physicianExists = await prisma.physician.findUnique({
+        where: { id: defaultPhysicianId }
+      })
+      
+      if (!physicianExists) {
+        // Generate a unique email for the default physician
+        const uniqueEmail = `default_${Date.now()}@example.com`
+        
+        try {
+          const newPhysician = await prisma.physician.create({
+            data: {
+              name: 'Default Physician',
+              email: uniqueEmail,
+              status: 'Active',
+              isActive: true
+            }
+          })
+          defaultPhysicianId = newPhysician.id
+        } catch (createError) {
+          console.error('Error creating default physician:', createError)
+          
+          // If creation fails, try to find an existing physician to use
+          const existingPhysician = await prisma.physician.findFirst({
+            where: { isActive: true }
+          })
+          
+          if (existingPhysician) {
+            defaultPhysicianId = existingPhysician.id
+          } else {
+            return NextResponse.json(
+              { error: 'Failed to create default physician and no existing physician found' },
+              { status: 500 }
+            )
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking/creating default physician:', error)
+      return NextResponse.json(
+        { error: 'Failed to create default physician' },
+        { status: 500 }
+      )
+    }
+
+    // Create the patient with basic info first
     const patient = await prisma.patient.create({
-      data: createData,
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || null,
+        phone: data.phone || '',
+        dateOfBirth: new Date(data.dateOfBirth),
+        middleName: data.middleName || '',
+        altNumber: data.altNumber || '',
+        doidol: data.doidol ? new Date(data.doidol) : null,
+        gender: data.gender || 'unknown',
+        address: data.address || '',
+        city: data.city || '',
+        zip: data.zip || '',
+        lawyer: data.lawyer || '',
+        orderDate: data.orderDate ? new Date(data.orderDate) : null,
+        orderFor: data.orderFor || '',
+        status: {
+          connect: {
+            id: data.statusId || '67ed260cc52a7fd85d24a7a0'
+          }
+        },
+        procedures: {
+          create: data.procedures.map((proc: any) => {
+            const procedureData: any = {
+              exam: {
+                connect: {
+                  id: proc.examId
+                }
+              },
+              status: {
+                connect: {
+                  id: proc.statusId
+                }
+              },
+              scheduleDate: new Date(proc.scheduleDate),
+              scheduleTime: proc.scheduleTime || '00:00',
+              lop: proc.lop || null,
+              isCompleted: proc.isCompleted || false
+            };
+            
+            // Only add facility if it exists
+            if (proc.facilityId || defaultFacilityId) {
+              procedureData.facility = {
+                connect: {
+                  id: proc.facilityId || defaultFacilityId
+                }
+              };
+            }
+            
+            // Only add physician if it exists
+            if (proc.physicianId || defaultPhysicianId) {
+              procedureData.physician = {
+                connect: {
+                  id: proc.physicianId || defaultPhysicianId
+                }
+              };
+            }
+            
+            return procedureData;
+          })
+        }
+      },
       include: {
         status: true,
         payer: true,
-        appointments: true,
-        cases: true
+        procedures: {
+          include: {
+            exam: true,
+            status: true,
+            facility: true,
+            physician: true
+          }
+        }
       }
     })
 
     return NextResponse.json(patient)
   } catch (error) {
-    console.error('Error creating patient:', error)
+    console.error('[PATIENTS_POST] Error details:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create patient. Please check all required fields.' },
       { status: 500 }
     )
   }
@@ -118,11 +322,23 @@ export async function PUT(request: Request) {
       )
     }
 
+    // Validate procedures if provided
+    if (data.procedures && data.procedures.length > 0) {
+      for (const proc of data.procedures) {
+        // Basic validation - only exam and status are required
+        if (!proc.examId || !proc.statusId) {
+          return NextResponse.json({ 
+            error: "Only exam and status are required for each procedure" 
+          }, { status: 400 })
+        }
+      }
+    }
+
     const updateData: Prisma.PatientUpdateInput = {
       firstName: data.firstName.trim(),
       middleName: data.middleName?.trim() || null,
       lastName: data.lastName.trim(),
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : "",
       phone: data.phone?.trim() || null,
       altNumber: data.altNumber?.trim() || null,
       email: data.email?.trim() || null,
@@ -131,7 +347,7 @@ export async function PUT(request: Request) {
       city: data.city?.trim() || null,
       zip: data.zip?.trim() || null,
       lawyer: data.lawyer?.trim() || null,
-      orderDate: data.orderDate ? new Date(data.orderDate) : undefined,
+      orderDate: data.orderDate ? new Date(data.orderDate) : "",
       orderFor: data.orderFor?.trim() || null,
       ...(data.statusId && {
         status: {
@@ -142,7 +358,27 @@ export async function PUT(request: Request) {
         payer: {
           connect: { id: data.payerId }
         }
-      })
+      }),
+      // Handle procedures update/deletion
+      procedures: {
+        // First delete all existing procedures
+        deleteMany: {
+          patientId: id
+        },
+        // Then create new ones if any are provided
+        ...(data.procedures && data.procedures.length > 0 ? {
+          create: data.procedures.map((proc: Procedure) => ({
+            examId: proc.examId,
+            statusId: proc.statusId,
+            scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate) : "",
+            scheduleTime: proc.scheduleTime || null,
+            facilityId: proc.facilityId || null,
+            physicianId: proc.physicianId || null,
+            lop: proc.lop || null,
+            isCompleted: proc.isCompleted || null
+          }))
+        } : {})
+      }
     }
 
     const patient = await prisma.patient.update({
@@ -151,8 +387,14 @@ export async function PUT(request: Request) {
       include: {
         status: true,
         payer: true,
-        appointments: true,
-        cases: true
+        procedures: {
+          include: {
+            exam: true,
+            status: true,
+            facility: true,
+            physician: true
+          }
+        }
       }
     })
 
@@ -190,4 +432,13 @@ export async function DELETE(request: Request) {
       { status: 500 }
     )
   }
+}
+
+// Helper function to format dates consistently
+function formatDate(date: Date) {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
 } 

@@ -6,42 +6,32 @@ import { useRouter } from 'next/navigation'
 import { PhoneIcon } from '@heroicons/react/24/outline'
 
 interface Status {
-  id: string
   name: string
   color: string
 }
 
 interface Procedure {
   id: string
-  exam: {
-    id: string
-    name: string
-  }
-  scheduleDate: string
-  scheduleTime: string
-  status: {
-    id: string
-    name: string
-    color: string
-  }
+  exam: string
+  status: Status
+  date: string
 }
 
 interface Patient {
   id: string
+  name: string
   firstName: string
   lastName: string
   dateOfBirth: string
-  phone: string
-  email: string
+  contact: string
   status: Status
-  payer: {
-    id: string
-    name: string
-    isActive: boolean
-    createdAt: string
-    updatedAt: string
-  } | null
+  payer: string
   procedures: Procedure[]
+  email: string | null
+  phone: string | null
+  address: string | null
+  city: string | null
+  zip: string | null
 }
 
 export default function PatientsPage() {
@@ -196,7 +186,7 @@ export default function PatientsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {patient.payer?.name || 'No Payer'}
+                    {patient.payer || 'No Payer'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     <div className="flex flex-col gap-1">
@@ -205,11 +195,11 @@ export default function PatientsPage() {
                           key={procedure.id}
                           className="px-2 py-1 rounded-md text-xs font-medium"
                           style={{ 
-                            backgroundColor: procedure.status.color + '20',
+                            backgroundColor: `${procedure.status.color}20`,
                             color: procedure.status.color
                           }}
                         >
-                          {procedure.exam.name} - {formatDate(procedure.scheduleDate)}
+                          {procedure.exam} - {procedure.date}
                         </div>
                       ))}
                     </div>
