@@ -8,10 +8,22 @@ export async function GET() {
     const session = await getServerSession(authOptions)
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new NextResponse("Unauthorized", { status: 401 })
     }
 
     const physicians = await prisma.physician.findMany({
+      select: {
+        id: true,
+        prefix: true,
+        name: true,
+        suffix: true,
+        phoneNumber: true,
+        email: true,
+        npiNumber: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true
+      },
       orderBy: {
         name: 'asc'
       }
@@ -19,11 +31,8 @@ export async function GET() {
 
     return NextResponse.json(physicians)
   } catch (error) {
-    console.error('Error fetching physicians:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('[PHYSICIANS_GET]', error)
+    return new NextResponse("Internal error", { status: 500 })
   }
 }
 

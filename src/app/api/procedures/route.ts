@@ -47,31 +47,61 @@ export async function POST(request: Request) {
 
     const data = await request.json()
 
+    // Validate required fields
+    if (!data.patientId || !data.examId || !data.scheduleDate || !data.scheduleTime) {
+      return NextResponse.json({
+        error: 'Patient, exam, schedule date, and schedule time are required'
+      }, { status: 400 })
+    }
+
+    // Validate time format (HH:mm:ss)
+    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
+    if (!timeRegex.test(data.scheduleTime)) {
+      return NextResponse.json({
+        error: 'Invalid time format. Please use HH:mm:ss format'
+      }, { status: 400 })
+    }
+
+    // Create the procedure
     const procedure = await prisma.procedure.create({
       data: {
-        patientId: data.patientId,
-        isCompleted: data.isCompleted,
-        exam: data.exam,
+        patient: {
+          connect: { id: data.patientId }
+        },
+        exam: {
+          connect: { id: data.examId }
+        },
+        status: {
+          connect: { id: data.statusId }
+        },
         scheduleDate: new Date(data.scheduleDate),
         scheduleTime: data.scheduleTime,
-        statusId: data.statusId,
-        facilityId: data.facilityId,
-        physicianId: data.physicianId,
-        lop: data.lop,
+        ...(data.facilityId && {
+          facility: {
+            connect: { id: data.facilityId }
+          }
+        }),
+        ...(data.physicianId && {
+          physician: {
+            connect: { id: data.physicianId }
+          }
+        }),
+        isCompleted: false
       },
       include: {
         patient: true,
-        facility: true,
-        physician: true,
+        exam: true,
         status: true,
-      },
+        facility: true,
+        physician: true
+      }
     })
 
     return NextResponse.json(procedure)
   } catch (error) {
-    console.error('Error creating procedure:', error)
+    console.error('[PROCEDURES_POST]', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create procedure' },
       { status: 500 }
     )
   }

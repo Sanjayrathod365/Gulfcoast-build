@@ -59,14 +59,15 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
         throw new Error('Physician not found')
       }
 
+      // Ensure all form values are strings or booleans, never undefined
       setFormData({
-        prefix: physician.prefix,
-        name: physician.name,
-        suffix: physician.suffix ?? '',
-        phoneNumber: physician.phoneNumber,
-        email: physician.email,
-        npiNumber: physician.npiNumber ?? '',
-        isActive: physician.isActive,
+        prefix: physician.prefix || '',
+        name: physician.name || '',
+        suffix: physician.suffix || '',
+        phoneNumber: physician.phoneNumber || '',
+        email: physician.email || '',
+        npiNumber: physician.npiNumber || '',
+        isActive: physician.isActive === false ? false : true,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -79,9 +80,11 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
     const { name, value, type } = e.target
 
     if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked
+      console.log(`Setting ${name} to:`, checked) // Debug log
       setFormData(prev => ({
         ...prev,
-        [name]: (e.target as HTMLInputElement).checked
+        [name]: checked
       }))
       return
     }
@@ -90,14 +93,14 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
       const formattedValue = formatPhoneNumber(value)
       setFormData(prev => ({
         ...prev,
-        [name]: formattedValue
+        [name]: formattedValue || ''
       }))
       return
     }
 
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value || ''
     }))
   }
 

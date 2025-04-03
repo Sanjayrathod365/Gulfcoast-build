@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const exams = await prisma.exam.findMany({
       include: {
-        subExams: true
+        subExams: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            examId: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
       },
       orderBy: {
         name: 'asc',
@@ -14,9 +30,9 @@ export async function GET() {
 
     return NextResponse.json(exams)
   } catch (error) {
-    console.error('Error fetching exams:', error)
+    console.error('[EXAMS_GET]', error)
     return NextResponse.json(
-      { error: 'Failed to fetch exams' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

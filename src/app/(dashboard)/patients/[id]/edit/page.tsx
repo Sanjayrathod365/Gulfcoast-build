@@ -138,54 +138,149 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
     return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return ''
-    try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return ''
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const year = date.getFullYear()
-      return `${month}/${day}/${year}`
-    } catch (error) {
-      console.error('Error formatting date:', error)
-      return ''
-    }
-  }
-
-  const parseDate = (dateString: string) => {
-    if (!dateString) return null
+  const formatDateForInput = (dateString: string | null) => {
+    if (!dateString) return '';
     
     try {
-      const [month, day, year] = dateString.split('/')
-      const monthNum = parseInt(month)
-      const dayNum = parseInt(day)
-      const yearNum = parseInt(year)
-
-      // Validate date components
-      if (isNaN(monthNum) || isNaN(dayNum) || isNaN(yearNum)) {
-        return null
+      // Handle ISO date format
+      if (dateString.includes('T')) {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
       }
-
-      // Validate ranges
-      if (monthNum < 1 || monthNum > 12) return null
-      if (dayNum < 1 || dayNum > 31) return null
-      if (yearNum < 1900 || yearNum > 2100) return null
-
-      const date = new Date(yearNum, monthNum - 1, dayNum)
       
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return null
+      // Handle MM/DD/YYYY format
+      if (dateString.includes('/')) {
+        const [month, day, year] = dateString.split('/');
+        // Make sure we have valid components
+        if (month && day && year && !year.includes('T')) {
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+      }
+      
+      return '';
+    } catch (error) {
+      console.error('Error formatting date for input:', error);
+      return '';
+    }
+  };
+
+  const formatDateForDisplay = (dateString: string | null) => {
+    if (!dateString) return '';
+    
+    try {
+      let date;
+      
+      // Handle ISO date format
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } 
+      // Handle YYYY-MM-DD format
+      else if (dateString.includes('-')) {
+        const [year, month, day] = dateString.split('-');
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+      // Handle MM/DD/YYYY format
+      else if (dateString.includes('/')) {
+        const [month, day, year] = dateString.split('/');
+        // Remove any extra parts after year (like time)
+        const cleanYear = year.split('T')[0];
+        date = new Date(parseInt(cleanYear), parseInt(month) - 1, parseInt(day));
+      } else {
+        return '';
       }
 
-      // Return date in ISO format with time set to midnight UTC
-      return new Date(Date.UTC(yearNum, monthNum - 1, dayNum)).toISOString()
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
     } catch (error) {
-      console.error('Error parsing date:', error)
-      return null
+      console.error('Error formatting date for display:', error);
+      return '';
     }
-  }
+  };
+
+  const parseDate = (dateString: string) => {
+    if (!dateString) return null;
+    
+    try {
+      // Handle MM/DD/YYYY format
+      if (dateString.includes('/')) {
+        const [month, day, year] = dateString.split('/');
+        // Remove any time component from year
+        const cleanYear = year.split('T')[0];
+        
+        const monthNum = parseInt(month);
+        const dayNum = parseInt(day);
+        const yearNum = parseInt(cleanYear);
+
+        // Validate date components
+        if (isNaN(monthNum) || isNaN(dayNum) || isNaN(yearNum)) {
+          return null;
+        }
+
+        // Validate ranges
+        if (monthNum < 1 || monthNum > 12) return null;
+        if (dayNum < 1 || dayNum > 31) return null;
+        if (yearNum < 1900 || yearNum > 2100) return null;
+
+        // Create date object and verify it's valid
+        const date = new Date(yearNum, monthNum - 1, dayNum);
+        if (isNaN(date.getTime())) {
+          return null;
+        }
+
+        // Return date in ISO format
+        return date.toISOString();
+      }
+      
+      // Handle ISO format
+      if (dateString.includes('T')) {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error parsing date:', error);
+      return null;
+    }
+  };
+
+  const validateTime = (timeString: string) => {
+    // Regular expression for HH:mm format (24-hour)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(timeString);
+  };
+
+  const formatTimeForDisplay = (timeString: string | null) => {
+    if (!timeString) return '';
+    
+    // If the time is already in HH:mm format, return it
+    if (validateTime(timeString)) return timeString;
+    
+    // If it's in HH:mm:ss format, remove the seconds
+    if (timeString.length === 8) {
+      return timeString.substring(0, 5);
+    }
+    
+    return '';
+  };
+
+  const formatTimeForSubmission = (timeString: string) => {
+    // Ensure the time is in HH:mm:ss format for the database
+    if (validateTime(timeString)) {
+      return `${timeString}:00`;
+    }
+    return timeString;
+  };
 
   useEffect(() => {
     fetchPatient()
@@ -334,7 +429,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
       const formattedProcedures = data.procedures?.map((proc: any) => ({
         id: proc.id,
         examId: proc.exam.id,
-        scheduleDate: formatDate(proc.scheduleDate),
+        scheduleDate: formatDateForDisplay(proc.scheduleDate),
         scheduleTime: proc.scheduleTime || '',
         facilityId: proc.facilityId,
         physicianId: proc.physicianId,
@@ -347,11 +442,11 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         firstName: data.firstName || '',
         middleName: data.middleName || '',
         lastName: data.lastName || '',
-        dateOfBirth: formatDate(data.dateOfBirth),
+        dateOfBirth: formatDateForDisplay(data.dateOfBirth),
         phone: data.phone || '',
         altNumber: data.altNumber || '',
         email: data.email || '',
-        doidol: formatDate(data.doidol),
+        doidol: formatDateForDisplay(data.doidol),
         gender: data.gender || 'unknown',
         address: data.address || '',
         city: data.city || '',
@@ -360,7 +455,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         payerId: data.payer?.id || '',
         lawyer: data.lawyer || '',
         attorneyId: data.attorney?.id || '',
-        orderDate: formatDate(data.orderDate),
+        orderDate: formatDateForDisplay(data.orderDate),
         orderFor: data.orderFor || '',
         referringDoctorId: data.referringDoctor?.id || '',
         procedures: formattedProcedures
@@ -1007,21 +1102,21 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 {formData.procedures.map((procedure, index) => (
-                  <div key={index} className="bg-white p-6 rounded-lg shadow-sm mb-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-md font-medium text-gray-900">Procedure {index + 1}</h3>
+                  <div key={index} className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium">Procedure {index + 1}</h3>
                       <button
                         type="button"
                         onClick={() => removeProcedure(index)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-800"
                       >
                         Remove
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label htmlFor={`procedures.${index}.examId`} className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Exam Name *
                         </label>
                         <select
@@ -1030,7 +1125,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                           value={procedure.examId}
                           onChange={(e) => updateProcedure(index, 'examId', e.target.value)}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                         >
                           <option value="">Select Exam</option>
                           {exams.map((exam) => (
@@ -1042,39 +1137,51 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       <div>
-                        <label htmlFor={`procedures.${index}.scheduleDate`} className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Schedule Date *
                         </label>
                         <input
-                          type="text"
-                          id={`procedures.${index}.scheduleDate`}
-                          name={`procedures.${index}.scheduleDate`}
-                          value={procedure.scheduleDate}
-                          onChange={(e) => updateProcedure(index, 'scheduleDate', e.target.value)}
+                          type="date"
+                          value={formatDateForInput(procedure.scheduleDate)}
+                          onChange={(e) => {
+                            const inputDate = e.target.value;
+                            if (inputDate) {
+                              // Convert YYYY-MM-DD to MM/DD/YYYY for internal storage
+                              const [year, month, day] = inputDate.split('-');
+                              const formattedDate = `${month}/${day}/${year}`;
+                              updateProcedure(index, 'scheduleDate', formattedDate);
+                            } else {
+                              updateProcedure(index, 'scheduleDate', '');
+                            }
+                          }}
+                          min="2000-01-01"
+                          max="2100-12-31"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                           required
-                          placeholder="MM/DD/YYYY"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor={`procedures.${index}.scheduleTime`} className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Schedule Time *
                         </label>
                         <input
-                          type="text"
-                          id={`procedures.${index}.scheduleTime`}
-                          name={`procedures.${index}.scheduleTime`}
-                          value={procedure.scheduleTime}
-                          onChange={(e) => updateProcedure(index, 'scheduleTime', e.target.value)}
+                          type="time"
+                          value={formatTimeForDisplay(procedure.scheduleTime)}
+                          onChange={(e) => {
+                            const newTime = e.target.value;
+                            if (validateTime(newTime)) {
+                              updateProcedure(index, 'scheduleTime', formatTimeForSubmission(newTime));
+                            }
+                          }}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                           required
-                          placeholder="HH:MM AM/PM"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          step="60"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor={`procedures.${index}.facilityId`} className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Facility *
                         </label>
                         <select
@@ -1083,7 +1190,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                           value={procedure.facilityId}
                           onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                         >
                           <option value="">Select Facility</option>
                           {facilities.map((facility) => (
@@ -1095,7 +1202,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       <div>
-                        <label htmlFor={`procedures.${index}.physicianId`} className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Physician *
                         </label>
                         <select
@@ -1104,7 +1211,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                           value={procedure.physicianId}
                           onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                         >
                           <option value="">Select Physician</option>
                           {physicians.map((physician) => (
@@ -1116,7 +1223,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       <div>
-                        <label htmlFor={`procedures.${index}.statusId`} className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Status *
                         </label>
                         <select
@@ -1125,7 +1232,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                           value={procedure.statusId}
                           onChange={(e) => updateProcedure(index, 'statusId', e.target.value)}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                         >
                           <option value="">Select Status</option>
                           {statuses.map((status) => (
@@ -1134,18 +1241,6 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                             </option>
                           ))}
                         </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          LOP
-                        </label>
-                        <input
-                          type="text"
-                          value={procedure.lop}
-                          onChange={(e) => updateProcedure(index, 'lop', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
                       </div>
 
                       <div className="flex items-center">

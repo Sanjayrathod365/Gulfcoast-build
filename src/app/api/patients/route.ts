@@ -8,64 +8,37 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const patients = await prisma.patient.findMany({
-      orderBy: [
-        { lastName: "asc" },
-        { firstName: "asc" }
-      ],
       include: {
         status: true,
-        payer: true,
         procedures: {
           include: {
             exam: true,
+            facility: true,
+            physician: true,
             status: true
           },
           orderBy: {
             scheduleDate: 'desc'
           }
         }
-      }
+      },
+      orderBy: [
+        { lastName: 'asc' },
+        { firstName: 'asc' }
+      ]
     })
 
-    // Transform the data to match our frontend expectations
-    const transformedPatients = patients.map(patient => {
-      return {
-        id: patient.id,
-        name: `${patient.firstName} ${patient.lastName}`,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        dateOfBirth: patient.dateOfBirth ? formatDate(patient.dateOfBirth) : 'Invalid Date',
-        contact: patient.phone || patient.email || '-',
-        status: {
-          name: patient.status?.name || 'New',
-          color: patient.status?.color || 'gray'
-        },
-        payer: patient.payer?.name || 'No Payer',
-        procedures: patient.procedures.map(procedure => ({
-          id: procedure.id,
-          exam: procedure.exam.name,
-          status: {
-            name: procedure.status.name,
-            color: procedure.status.color
-          },
-          date: procedure.scheduleDate ? formatDate(procedure.scheduleDate) : '-'
-        })),
-        email: patient.email,
-        phone: patient.phone,
-        address: patient.address,
-        city: patient.city,
-        zip: patient.zip
-      }
-    })
-
-    return NextResponse.json(transformedPatients)
+    return NextResponse.json(patients)
   } catch (error) {
-    console.error("[PATIENTS_GET]", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('[PATIENTS_GET]', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 
@@ -325,11 +298,22 @@ export async function PUT(request: Request) {
     // Validate procedures if provided
     if (data.procedures && data.procedures.length > 0) {
       for (const proc of data.procedures) {
-        // Basic validation - only exam and status are required
+        // Validate required fields for procedures
         if (!proc.examId || !proc.statusId) {
           return NextResponse.json({ 
-            error: "Only exam and status are required for each procedure" 
+            error: "Exam and status are required for each procedure" 
           }, { status: 400 })
+        }
+
+        // Validate time format if provided
+        if (proc.scheduleTime) {
+          // Ensure time is in HH:mm:ss format
+          const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
+          if (!timeRegex.test(proc.scheduleTime)) {
+            return NextResponse.json({
+              error: "Invalid time format. Please use HH:mm:ss format"
+            }, { status: 400 })
+          }
         }
       }
     }
@@ -338,7 +322,7 @@ export async function PUT(request: Request) {
       firstName: data.firstName.trim(),
       middleName: data.middleName?.trim() || null,
       lastName: data.lastName.trim(),
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : "",
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
       phone: data.phone?.trim() || null,
       altNumber: data.altNumber?.trim() || null,
       email: data.email?.trim() || null,
@@ -347,7 +331,7 @@ export async function PUT(request: Request) {
       city: data.city?.trim() || null,
       zip: data.zip?.trim() || null,
       lawyer: data.lawyer?.trim() || null,
-      orderDate: data.orderDate ? new Date(data.orderDate) : "",
+      orderDate: data.orderDate ? new Date(data.orderDate) : null,
       orderFor: data.orderFor?.trim() || null,
       ...(data.statusId && {
         status: {
@@ -370,12 +354,12 @@ export async function PUT(request: Request) {
           create: data.procedures.map((proc: Procedure) => ({
             examId: proc.examId,
             statusId: proc.statusId,
-            scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate) : "",
+            scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate) : null,
             scheduleTime: proc.scheduleTime || null,
             facilityId: proc.facilityId || null,
             physicianId: proc.physicianId || null,
             lop: proc.lop || null,
-            isCompleted: proc.isCompleted || null
+            isCompleted: proc.isCompleted || false
           }))
         } : {})
       }
