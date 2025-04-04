@@ -15,6 +15,7 @@ export function useAuth() {
         email,
         password,
         redirect: false,
+        callbackUrl: '/dashboard',
       })
 
       if (result?.error) {
@@ -26,7 +27,9 @@ export function useAuth() {
         return false
       }
 
-      router.push('/dashboard')
+      if (result?.ok) {
+        router.push('/dashboard')
+      }
       return true
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {

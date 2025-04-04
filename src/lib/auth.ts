@@ -23,6 +23,7 @@ const FALLBACK_SECRET = "this_is_a_fallback_secret_do_not_use_in_production_b54d
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
+      id: "credentials",
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
