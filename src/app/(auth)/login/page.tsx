@@ -22,7 +22,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 
 const formSchema = z.object({
@@ -51,6 +50,7 @@ function LoginContent() {
     }
   }, [errorMessage, toast])
 
+  // Create a simple form rather than using the component
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,10 +60,12 @@ function LoginContent() {
   })
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log('Form submitted:', values);
+    setIsLoading(true);
     try {
       const success = await login(values.email, values.password)
+      console.log('Login result:', success);
       if (!success) {
-        // Login failed, but it's already handled in the useAuth hook
         console.log('Login failed')
       }
     } catch (error) {
@@ -73,6 +75,8 @@ function LoginContent() {
         description: 'An error occurred during login',
         variant: 'destructive',
       })
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -95,6 +99,7 @@ function LoginContent() {
     )
   }
 
+  // Use a direct form instead of the LoginForm component
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-md">
@@ -107,10 +112,52 @@ function LoginContent() {
           )}
         </CardHeader>
         <CardContent>
-          <LoginForm
-            onSubmit={handleSubmit}
-            onForgotPassword={handleForgotPassword}
-          />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Enter your email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Enter your password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-between items-center">
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={handleForgotPassword}
+                  className="text-sm"
+                >
+                  Forgot password?
+                </Button>
+              </div>
+
+              <Button type="submit" className="w-full">
+                Log in
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
