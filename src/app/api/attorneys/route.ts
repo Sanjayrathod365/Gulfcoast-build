@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server'
-import { Prisma, Attorney, User, CaseManager } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { hasPermission } from '@/utils/auth'
 import { prisma } from '@/lib/prisma'
-import { hash } from 'bcryptjs'
-import { jwtVerify } from 'jose'
-import { JwtPayload } from 'jsonwebtoken'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -15,16 +11,6 @@ interface CaseManagerData {
   phone: string
   phoneExt?: string
   faxNumber?: string
-}
-
-type AttorneyUpdateData = {
-  phone?: string | null
-  faxNumber?: string | null
-  address?: string | null
-  city?: string | null
-  state?: string | null
-  zipcode?: string | null
-  notes?: string | null
 }
 
 // GET /api/attorneys - Get all attorneys or a single attorney by ID
@@ -93,7 +79,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log('Received attorney creation request:', body)
-    const { name, email, password, hasLogin, phone, faxNumber, address, city, state, zipcode, zip, notes, caseManagers } = body
+    const { name, email, password, hasLogin, phone, address, city, state, zipcode, zip, notes, caseManagers } = body
 
     // Validate required fields
     if (!name || !email) {

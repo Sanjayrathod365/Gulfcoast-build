@@ -1,12 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -25,10 +23,8 @@ interface User {
 }
 
 export default function AddTaskPage() {
-  const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [formData, setFormData] = useState({
     title: "",
@@ -38,12 +34,6 @@ export default function AddTaskPage() {
     dueDate: "",
     assignedToId: "",
   })
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login")
-    }
-  }, [status, router])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -57,15 +47,12 @@ export default function AddTaskPage() {
       }
     }
 
-    if (status === "authenticated") {
-      fetchUsers()
-    }
-  }, [status])
+    fetchUsers()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
 
     try {
       const response = await fetch("/api/tasks", {
@@ -83,7 +70,7 @@ export default function AddTaskPage() {
 
       router.push("/tasks")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Something went wrong")
+      console.error("Error submitting task:", error)
     } finally {
       setLoading(false)
     }
@@ -96,7 +83,7 @@ export default function AddTaskPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center items-center">
         <motion.div

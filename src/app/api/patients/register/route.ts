@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
+import { sendApiResponse, handleApiError } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
+import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-const prisma = new PrismaClient()
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, password, name, dateOfBirth, gender, phone, address } = body
 
     // Validate required fields
     if (!email || !password || !name || !dateOfBirth || !gender || !phone || !address) {
-      return NextResponse.json(
-        { message: 'All fields are required' },
-        { status: 400 }
-      )
+      return sendApiResponse(undefined, 'All fields are required', 400)
     }
 
     // Check if email already exists
@@ -24,40 +22,48 @@ export async function POST(request: Request) {
     })
 
     if (existingUser) {
-      return NextResponse.json(
-        { message: 'Email already registered' },
-        { status: 400 }
-      )
+      return sendApiResponse(undefined, 'Email already registered', 400)
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    logger.info('Starting patient registration', request)
+
     // Create user and patient in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create user
-      const user = await tx.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          role: 'patient',
-          name,
-        },
-      })
+      try {
+        // Create user
+        const user = await tx.user.create({
+          data: {
+            email,
+            password: hashedPassword,
+            role: 'patient',
+            name,
+          },
+        })
+        logger.info(`User created: ${user.id}`, request)
 
-      // Create patient profile
-      const patient = await tx.patient.create({
-        data: {
-          userId: user.id,
-          dateOfBirth: new Date(dateOfBirth),
-          gender,
-          phone,
-          address,
-        },
-      })
+        // Create patient profile
+        const patient = await tx.patient.create({
+          data: {
+            userId: user.id,
+            dateOfBirth: new Date(dateOfBirth),
+            gender,
+            phone,
+            address,
+          },
+        })
+        logger.info(`Patient profile created: ${patient.id}`, request)
 
-      return { user, patient }
+        return { user, patient }
+      } catch (error) {
+        logger.error('Transaction error', error instanceof Error ? error : new Error('Unknown error'), request)
+        throw error
+      }
     })
+
+    logger.info('Patient registration completed successfully', request)
 
     // Generate JWT token
     const token = jwt.sign(
@@ -86,12 +92,6 @@ export async function POST(request: Request) {
 
     return response
   } catch (error) {
-    console.error('Error registering patient:', error)
-    return NextResponse.json(
-      { message: 'Error registering patient' },
-      { status: 500 }
-    )
-  } finally {
-    await prisma.$disconnect()
+    return handleApiError(error)
   }
 } 

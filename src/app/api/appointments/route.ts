@@ -10,6 +10,16 @@ type AppointmentInput = {
   notes?: string | null
 }
 
+type DateFilter = {
+  gte?: Date
+  lte?: Date
+}
+
+type AppointmentWhereInput = {
+  date?: DateFilter
+  patientId?: string
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -23,7 +33,7 @@ export async function GET(request: NextRequest) {
       patientId
     })
 
-    const where: Record<string, any> = {}
+    const where: AppointmentWhereInput = {}
 
     if (startDate) {
       const start = new Date(startDate)

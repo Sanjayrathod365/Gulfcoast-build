@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, isSameDay, parse, setHours, setMinutes, addMinutes } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, Pencil, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pencil, Check } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,17 +69,6 @@ interface Patient {
 interface Exam {
   id: string;
   name: string;
-}
-
-interface EditProcedureData {
-  id: string;
-  patientId: string;
-  examId: string;
-  facilityId: string;
-  physicianId: string;
-  scheduleDate: string;
-  scheduleTime: string;
-  statusId: string;
 }
 
 export default function CalendarPage() {

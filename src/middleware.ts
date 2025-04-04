@@ -17,23 +17,6 @@ const ratelimit = new Ratelimit({
   analytics: true,
 })
 
-// Define public paths that don't require authentication
-const publicPaths = ['/login', '/register']
-
-// Define role types
-type Role = 'ADMIN' | 'STAFF' | 'DOCTOR' | 'ATTORNEY'
-
-// Give all roles full access for now
-const allPaths = ['/dashboard', '/patients', '/tools', '/calendar', '/reports', '/settings']
-
-// Define role-based access control (temporarily giving all roles full access)
-const roleAccess: Record<Role, string[]> = {
-  ADMIN: allPaths,
-  STAFF: allPaths,
-  DOCTOR: allPaths,
-  ATTORNEY: allPaths
-}
-
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 

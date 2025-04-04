@@ -2,20 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import Link from 'next/link'
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2, Plus, Edit, Trash2 } from 'lucide-react'
+import { useApi } from '@/hooks/use-api'
+import { Case } from '@/types/case'
+import { format } from 'date-fns'
 
 interface Case {
   id: string
@@ -31,10 +25,9 @@ interface Case {
 }
 
 export default function CasesPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [cases, setCases] = useState<Case[]>([])
+  const [loading, setLoading] = useState(true)
+  const { callApi } = useApi()
 
   useEffect(() => {
     fetchCases()

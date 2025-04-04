@@ -1,33 +1,19 @@
 "use client"
 
-import { useEffect, useState, use } from "react"
+import { useEffect, useState, useMemo } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { Loader2, ArrowLeft, CheckCircle2, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  dueDate: string
-  assignedToId: string | null
-  assignedTo: {
-    id: string
-    name: string
-    email: string
-  } | null
-  createdAt: string
-  updatedAt: string
-}
+import { Loader2, Calendar, User, Tag, ArrowLeft, Save, Trash2 } from "lucide-react"
+import { Task } from "@/types/task"
+import { useApi } from "@/hooks/use-api"
+import { useToast } from "@/hooks/use-toast"
+import { format } from "date-fns"
 
 interface User {
   id: string
@@ -35,27 +21,18 @@ interface User {
   email: string
 }
 
-export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { data: session, status } = useSession()
+export default function TaskDetailPage() {
   const router = useRouter()
   const [task, setTask] = useState<Task | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const { id } = use(params)
+  const { id } = useParams()
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login")
-      return
-    }
-
-    if (status === "authenticated") {
-      fetchData()
-    }
-  }, [status, router, id])
+    fetchData()
+  }, [id])
 
   const fetchData = async () => {
     try {
@@ -87,7 +64,6 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     e.preventDefault()
     if (!task) return
 
-    setSaving(true)
     try {
       const response = await fetch(`/api/tasks/${id}`, {
         method: "PUT",
@@ -107,15 +83,12 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     } catch (error) {
       setError("Failed to update task")
       console.error("Error updating task:", error)
-    } finally {
-      setSaving(false)
     }
   }
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this task?")) return
 
-    setSaving(true)
     try {
       const response = await fetch(`/api/tasks/${id}`, {
         method: "DELETE",
@@ -129,38 +102,10 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     } catch (error) {
       setError("Failed to delete task")
       console.error("Error deleting task:", error)
-    } finally {
-      setSaving(false)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "todo":
-        return "bg-gray-500"
-      case "in progress":
-        return "bg-blue-500"
-      case "done":
-        return "bg-green-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case "low":
-        return "bg-green-500"
-      case "medium":
-        return "bg-yellow-500"
-      case "high":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center items-center">
         <motion.div
@@ -366,11 +311,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                   type="submit"
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                  )}
+                  <Save className="h-4 w-4 mr-2" />
                   Update Task
                 </motion.button>
               </motion.div>

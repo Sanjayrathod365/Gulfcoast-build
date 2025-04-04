@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { formatDate } from '@/utils/formatters'
 
 interface Status {
   id: string
@@ -56,11 +55,9 @@ interface ProcedureFormProps {
 }
 
 export default function ProcedureForm({ procedures, onProceduresChange }: ProcedureFormProps) {
-  const { data: session } = useSession()
   const [statuses, setStatuses] = useState<Status[]>([])
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [physicians, setPhysicians] = useState<Physician[]>([])
-  const [exams, setExams] = useState<Exam[]>([])
   const [error, setError] = useState<string>('')
 
   useEffect(() => {

@@ -13,7 +13,7 @@ interface Status {
 
 export default function StatusesPage() {
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  const { status: sessionStatus } = useSession()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [statuses, setStatuses] = useState<Status[]>([])

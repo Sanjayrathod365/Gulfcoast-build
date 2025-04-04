@@ -5,8 +5,25 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, CheckCircle, Clock, AlertCircle, Users, Calendar, FileText, ClipboardList } from 'lucide-react'
-import Link from 'next/link'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, Calendar, Users, BarChart2, Settings, CheckSquare, ClipboardList, AlertTriangle, Bell, MessageSquare, CheckCircle, Clock, FileText } from 'lucide-react'
+import { Appointment } from '@/types/appointment'
+import { useApi } from '@/hooks/use-api'
+import { format } from 'date-fns'
+
+// Define Task and Case types directly in this file
+interface Task {
+  id: string
+  title: string
+  status: string
+}
+
+interface Case {
+  id: string
+  title: string
+  status: string
+}
 
 interface DashboardData {
   totalPatients: number
@@ -87,7 +104,7 @@ export default function DashboardPage() {
         setErrors(prev => ({ ...prev, appointments: 'Failed to fetch appointments' }))
       } else {
         const appointments = await appointmentsRes.json()
-        const todayAppointments = appointments.filter((app: any) => {
+        const todayAppointments = appointments.filter((app: Appointment) => {
           const appointmentDate = new Date(app.date)
           appointmentDate.setHours(0, 0, 0, 0)
           return appointmentDate.getTime() === today.getTime()
@@ -101,12 +118,12 @@ export default function DashboardPage() {
         setErrors(prev => ({ ...prev, cases: 'Failed to fetch cases' }))
       } else {
         const cases = await casesRes.json()
-        const activeCases = cases.filter((case_: any) => case_.status !== 'closed').length
+        const activeCases = cases.filter((case_: Case) => case_.status !== 'closed').length
         
         // Count cases by status
-        const completedCases = cases.filter((case_: any) => case_.status === 'completed').length
-        const inProgressCases = cases.filter((case_: any) => case_.status === 'in progress').length
-        const closedCases = cases.filter((case_: any) => case_.status === 'closed').length
+        const completedCases = cases.filter((case_: Case) => case_.status === 'completed').length
+        const inProgressCases = cases.filter((case_: Case) => case_.status === 'in progress').length
+        const closedCases = cases.filter((case_: Case) => case_.status === 'closed').length
         
         setData(prev => ({ 
           ...prev, 
@@ -128,8 +145,8 @@ export default function DashboardPage() {
         const tasks = await tasksRes.json()
         
         // Count tasks by status
-        const completedTasks = tasks.filter((task: any) => task.status === 'completed').length
-        const inProgressTasks = tasks.filter((task: any) => task.status === 'in progress').length
+        const completedTasks = tasks.filter((task: Task) => task.status === 'completed').length
+        const inProgressTasks = tasks.filter((task: Task) => task.status === 'in progress').length
         
         setData(prev => ({ 
           ...prev, 
@@ -401,12 +418,12 @@ export default function DashboardPage() {
                         <Clock className="h-5 w-5 mr-2 text-yellow-600" />
                         <CardTitle className="text-yellow-700">In Progress</CardTitle>
                       </div>
-          </CardHeader>
+                    </CardHeader>
                     <CardContent className="pt-6">
                       <p className="text-3xl font-bold text-gray-900">{data.cases.inProgress}</p>
                       <p className="text-sm text-gray-500 mt-2">Cases in progress</p>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
                 </motion.div>
                 
                 <motion.div
@@ -418,15 +435,15 @@ export default function DashboardPage() {
                   <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
                     <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100">
                       <div className="flex items-center">
-                        <AlertCircle className="h-5 w-5 mr-2 text-gray-600" />
+                        <AlertTriangle className="h-5 w-5 mr-2 text-gray-600" />
                         <CardTitle className="text-gray-700">Closed</CardTitle>
                       </div>
-          </CardHeader>
+                    </CardHeader>
                     <CardContent className="pt-6">
                       <p className="text-3xl font-bold text-gray-900">{data.cases.closed}</p>
                       <p className="text-sm text-gray-500 mt-2">Cases closed</p>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
                 </motion.div>
                 
                 <motion.div
@@ -441,12 +458,12 @@ export default function DashboardPage() {
                         <FileText className="h-5 w-5 mr-2 text-blue-600" />
                         <CardTitle className="text-blue-700">Total</CardTitle>
                       </div>
-          </CardHeader>
+                    </CardHeader>
                     <CardContent className="pt-6">
                       <p className="text-3xl font-bold text-gray-900">{data.cases.total}</p>
                       <p className="text-sm text-gray-500 mt-2">Total cases</p>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               </div>
             </motion.div>

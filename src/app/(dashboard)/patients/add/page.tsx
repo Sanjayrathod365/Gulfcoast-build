@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 import { Loader2, Plus, X, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 interface Payer {
@@ -210,40 +210,6 @@ export default function AddPatientPage() {
     } catch (error) {
       console.error('Error formatting date:', error)
       return ''
-    }
-  }
-
-  const parseDate = (dateString: string) => {
-    if (!dateString) return null
-    
-    try {
-      const [month, day, year] = dateString.split('/')
-      const monthNum = parseInt(month)
-      const dayNum = parseInt(day)
-      const yearNum = parseInt(year)
-
-      // Validate date components
-      if (isNaN(monthNum) || isNaN(dayNum) || isNaN(yearNum)) {
-        return null
-      }
-
-      // Validate ranges
-      if (monthNum < 1 || monthNum > 12) return null
-      if (dayNum < 1 || dayNum > 31) return null
-      if (yearNum < 1900 || yearNum > 2100) return null
-
-      const date = new Date(yearNum, monthNum - 1, dayNum)
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return null
-      }
-
-      // Return date in ISO format with time set to midnight UTC
-      return new Date(Date.UTC(yearNum, monthNum - 1, dayNum)).toISOString()
-    } catch (error) {
-      console.error('Error parsing date:', error)
-      return null
     }
   }
 

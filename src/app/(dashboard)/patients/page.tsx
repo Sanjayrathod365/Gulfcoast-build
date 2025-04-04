@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { Loader2, Plus, Pencil, Eye, Users } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
 interface Status {
   name: string
@@ -57,14 +58,15 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [callApi, setCallApi] = useState<typeof fetch>(fetch)
 
   useEffect(() => {
     fetchPatients()
-  }, [])
+  }, [callApi])
 
   const fetchPatients = async () => {
     try {
-      const response = await fetch('/api/patients')
+      const response = await callApi('/api/patients')
       if (!response.ok) {
         throw new Error('Failed to fetch patients')
       }
@@ -94,28 +96,6 @@ export default function PatientsPage() {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this patient?')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/patients/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete patient')
-      }
-
-      // Refresh the patient list
-      fetchPatients()
-    } catch (error) {
-      console.error('Error deleting patient:', error)
-      setError('Failed to delete patient')
-    }
-  }
 
   if (loading) {
     return (

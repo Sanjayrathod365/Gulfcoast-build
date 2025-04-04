@@ -1,4 +1,3 @@
-import { Appointment } from './appointment'
 import { Procedure } from './procedure'
 
 export interface Patient {

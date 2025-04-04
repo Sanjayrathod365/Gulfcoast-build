@@ -6,6 +6,8 @@ import { Phone, Mail, MapPin, Edit, ToggleLeft, ToggleRight } from 'lucide-react
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/use-toast'
+import { ColumnDef } from '@tanstack/react-table'
 
 interface Doctor {
   id: string
@@ -71,26 +73,6 @@ export default function DoctorsPage() {
     }
   }
 
-  const toggleLogin = async (doctorId: string, currentHasLogin: boolean) => {
-    try {
-      const response = await fetch(`/api/doctors/${doctorId}/login`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hasLogin: !currentHasLogin }),
-      })
-      if (!response.ok) throw new Error('Failed to update login status')
-      
-      // Update local state
-      setDoctors(doctors.map(doctor => 
-        doctor.id === doctorId 
-          ? { ...doctor, hasLogin: !currentHasLogin }
-          : doctor
-      ))
-    } catch (error) {
-      console.error('Error updating doctor login status:', error)
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -102,6 +84,10 @@ export default function DoctorsPage() {
       </div>
     )
   }
+
+  const columns: ColumnDef<Doctor>[] = [
+    // ... column definitions ...
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-2">

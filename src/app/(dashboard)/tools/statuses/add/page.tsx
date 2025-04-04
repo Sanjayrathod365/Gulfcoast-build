@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 
 export default function AddStatusPage() {
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  const { status: sessionStatus } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({

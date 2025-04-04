@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
+import { format, parseISO } from 'date-fns'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { useApi } from '@/hooks/use-api'
+import { useToast } from '@/hooks/use-toast'
+import { Loader2 } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface Doctor {
   id: string
@@ -137,34 +147,6 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
     if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`
     return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
   }
-
-  const formatDateForInput = (dateString: string | null) => {
-    if (!dateString) return '';
-    
-    try {
-      // Handle ISO date format
-      if (dateString.includes('T')) {
-        const date = new Date(dateString);
-        if (!isNaN(date.getTime())) {
-          return date.toISOString().split('T')[0];
-        }
-      }
-      
-      // Handle MM/DD/YYYY format
-      if (dateString.includes('/')) {
-        const [month, day, year] = dateString.split('/');
-        // Make sure we have valid components
-        if (month && day && year && !year.includes('T')) {
-          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        }
-      }
-      
-      return '';
-    } catch (error) {
-      console.error('Error formatting date for input:', error);
-      return '';
-    }
-  };
 
   const formatDateForDisplay = (dateString: string | null) => {
     if (!dateString) return '';

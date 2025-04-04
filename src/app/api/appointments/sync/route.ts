@@ -1,6 +1,18 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
+interface AppointmentData {
+  id?: string
+  patientId: string
+  doctorId: string
+  examId: string | null
+  date: string
+  time: string
+  type: string
+  status?: string
+  notes?: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
@@ -10,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Create or update appointments
     const results = await Promise.all(
-      appointments.map(async (appointment: any) => {
+      appointments.map(async (appointment: AppointmentData) => {
         try {
           // Convert date string to Date object
           const appointmentDate = new Date(appointment.date)

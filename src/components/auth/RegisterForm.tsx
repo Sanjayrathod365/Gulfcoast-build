@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, ControllerRenderProps } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -61,7 +61,7 @@ export function RegisterForm({ onSubmit, onCancel }: RegisterFormProps) {
         <FormField
           control={form.control}
           name="name"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<RegisterFormData, "name"> }) => (
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
@@ -75,7 +75,7 @@ export function RegisterForm({ onSubmit, onCancel }: RegisterFormProps) {
         <FormField
           control={form.control}
           name="email"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<RegisterFormData, "email"> }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
@@ -89,7 +89,7 @@ export function RegisterForm({ onSubmit, onCancel }: RegisterFormProps) {
         <FormField
           control={form.control}
           name="password"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<RegisterFormData, "password"> }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
@@ -103,7 +103,7 @@ export function RegisterForm({ onSubmit, onCancel }: RegisterFormProps) {
         <FormField
           control={form.control}
           name="confirmPassword"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<RegisterFormData, "confirmPassword"> }) => (
             <FormItem>
               <FormLabel>Confirm Password</FormLabel>
               <FormControl>
@@ -117,7 +117,7 @@ export function RegisterForm({ onSubmit, onCancel }: RegisterFormProps) {
         <FormField
           control={form.control}
           name="role"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<RegisterFormData, "role"> }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>

@@ -1,20 +1,5 @@
 import { useState } from 'react'
-import { useApi } from './use-api'
 import { Appointment } from '@/types/appointment'
-
-interface AppointmentResponse {
-  success: boolean
-  data: Appointment
-  message?: string
-  status: number
-}
-
-interface AppointmentsResponse {
-  success: boolean
-  data: Appointment[]
-  message?: string
-  status: number
-}
 
 export function useAppointment() {
   const [loading, setLoading] = useState(false)
@@ -36,11 +21,11 @@ export function useAppointment() {
         data: data,
         status: response.status
       }
-    } catch (error) {
-      console.error('Error in getAppointments:', error)
+    } catch (_error) {
+      console.error('Error in getAppointments:', _error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch appointments',
+        error: _error instanceof Error ? _error.message : 'Failed to fetch appointments',
         status: 500
       }
     } finally {
@@ -63,10 +48,10 @@ export function useAppointment() {
         data,
         status: response.status
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch appointment',
+        error: _error instanceof Error ? _error.message : 'Failed to fetch appointment',
         status: 500
       }
     } finally {
@@ -96,10 +81,10 @@ export function useAppointment() {
         data,
         status: response.status
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create appointment',
+        error: _error instanceof Error ? _error.message : 'Failed to create appointment',
         status: 500
       }
     } finally {
@@ -129,10 +114,10 @@ export function useAppointment() {
         data,
         status: response.status
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update appointment',
+        error: _error instanceof Error ? _error.message : 'Failed to update appointment',
         status: 500
       }
     } finally {
@@ -158,10 +143,10 @@ export function useAppointment() {
         data,
         status: response.status
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete appointment',
+        error: _error instanceof Error ? _error.message : 'Failed to delete appointment',
         status: 500
       }
     } finally {
@@ -170,10 +155,29 @@ export function useAppointment() {
   }
 
   const getAppointmentsByDate = async (date: string) => {
-    return callApi<Appointment[]>(`/api/appointments/date/${date}`, 'GET', undefined, {
-      successMessage: 'Appointments fetched successfully',
-      errorMessage: 'Failed to fetch appointments',
-    })
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/appointments?startDate=${date}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch appointments by date')
+      }
+      
+      return {
+        success: true,
+        data,
+        status: response.status
+      }
+    } catch (_error) {
+      return {
+        success: false,
+        error: _error instanceof Error ? _error.message : 'Failed to fetch appointments by date',
+        status: 500
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return {

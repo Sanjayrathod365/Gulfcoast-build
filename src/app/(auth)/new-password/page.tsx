@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { NewPasswordForm } from '@/components/auth/NewPasswordForm'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function NewPasswordPage() {
+function NewPasswordContent() {
   const [isLoading, setIsLoading] = useState(false)
   const { updatePassword } = useAuth()
   const router = useRouter()
@@ -23,7 +23,7 @@ export default function NewPasswordPage() {
     setIsLoading(true)
     try {
       const result = await updatePassword(token, data.password)
-      if (result?.success) {
+      if (result) {
         router.push('/login')
       }
     } finally {
@@ -74,5 +74,17 @@ export default function NewPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function NewPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <NewPasswordContent />
+    </Suspense>
   )
 } 

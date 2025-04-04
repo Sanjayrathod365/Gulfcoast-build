@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPhoneNumber } from '@/utils/formatters'
-import { Physician } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Trash2, ArrowLeft } from 'lucide-react'
 

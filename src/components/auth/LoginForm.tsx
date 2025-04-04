@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, ControllerRenderProps } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -44,7 +44,7 @@ export function LoginForm({ onSubmit, onForgotPassword }: LoginFormProps) {
         <FormField
           control={form.control}
           name="email"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<LoginFormData, "email"> }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
@@ -58,7 +58,7 @@ export function LoginForm({ onSubmit, onForgotPassword }: LoginFormProps) {
         <FormField
           control={form.control}
           name="password"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<LoginFormData, "password"> }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>

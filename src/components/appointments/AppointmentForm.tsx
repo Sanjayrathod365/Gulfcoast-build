@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
   SelectGroup,
-  SelectLabel,
 } from '@/components/ui/select'
 import { Appointment } from '@/types/appointment'
 import { Patient } from '@/types/patient'
@@ -57,10 +56,9 @@ interface AppointmentFormProps {
   onSubmit: (data: Omit<Appointment, 'id'> | Partial<Appointment>) => void
   onCancel: () => void
   patients: Patient[]
-  allExams: Exam[]
 }
 
-export function AppointmentForm({ appointment, onSubmit, onCancel, patients, allExams }: AppointmentFormProps) {
+export function AppointmentForm({ appointment, onSubmit, onCancel, patients }: AppointmentFormProps) {
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [filteredExams, setFilteredExams] = useState<Exam[]>([])
   const [loading, setLoading] = useState(false)
@@ -177,8 +175,8 @@ export function AppointmentForm({ appointment, onSubmit, onCancel, patients, all
         console.log('Fetched procedures:', procedures)
 
         // Extract unique exams from procedures
-        const uniqueExams = procedures.reduce((exams: Exam[], procedure: any) => {
-          if (procedure.exam && !exams.some(e => e.id === procedure.exam.id)) {
+        const uniqueExams = procedures.reduce((exams: Exam[], procedure: { exam?: Exam }) => {
+          if (procedure.exam && procedure.exam.id && !exams.some(e => e.id === procedure.exam?.id)) {
             exams.push(procedure.exam)
           }
           return exams

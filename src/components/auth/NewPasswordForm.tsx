@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, ControllerRenderProps } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -47,7 +47,7 @@ export function NewPasswordForm({ onSubmit, onCancel }: NewPasswordFormProps) {
         <FormField
           control={form.control}
           name="password"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<NewPasswordFormData, "password"> }) => (
             <FormItem>
               <FormLabel>New Password</FormLabel>
               <FormControl>
@@ -61,7 +61,7 @@ export function NewPasswordForm({ onSubmit, onCancel }: NewPasswordFormProps) {
         <FormField
           control={form.control}
           name="confirmPassword"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: ControllerRenderProps<NewPasswordFormData, "confirmPassword"> }) => (
             <FormItem>
               <FormLabel>Confirm New Password</FormLabel>
               <FormControl>

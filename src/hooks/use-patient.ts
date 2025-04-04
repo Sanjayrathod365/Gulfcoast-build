@@ -1,20 +1,6 @@
 import { useApi } from './use-api'
 import { Patient } from '@/types/patient'
 
-interface PatientResponse {
-  success: boolean
-  data: Patient
-  message?: string
-  status: number
-}
-
-interface PatientsResponse {
-  success: boolean
-  data: Patient[]
-  message?: string
-  status: number
-}
-
 export function usePatient() {
   const { loading, callApi } = useApi<Patient>({
     successMessage: 'Patient operation completed successfully',

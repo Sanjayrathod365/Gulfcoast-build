@@ -21,18 +21,19 @@ export function useAuth() {
         toast({
           title: 'Error',
           description: result.error,
-          type: 'error',
+          variant: 'destructive',
         })
         return false
       }
 
       router.push('/dashboard')
       return true
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'An error occurred during login',
-        type: 'error',
+        variant: 'destructive',
       })
       return false
     }
@@ -42,50 +43,57 @@ export function useAuth() {
     try {
       await signOut({ redirect: false })
       router.push('/login')
+      toast({
+        title: 'Success',
+        description: 'You have been logged out',
+        variant: 'default',
+      })
       return true
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'An error occurred during logout',
-        type: 'error',
+        variant: 'destructive',
       })
       return false
     }
   }
 
-  const register = async (data: { name: string; email: string; password: string }) => {
+  const register = async (name: string, email: string, password: string) => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ name, email, password }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
       if (!response.ok) {
         toast({
           title: 'Error',
-          description: result.error || 'An error occurred during registration',
-          type: 'error',
+          description: data.message || 'An error occurred during registration',
+          variant: 'destructive',
         })
         return false
       }
 
       toast({
         title: 'Success',
-        description: 'Registration successful. Please login.',
-        type: 'success',
+        description: 'Registration successful! You can now login.',
+        variant: 'default',
       })
       router.push('/login')
       return true
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'An error occurred during registration',
-        type: 'error',
+        variant: 'destructive',
       })
       return false
     }
@@ -101,28 +109,29 @@ export function useAuth() {
         body: JSON.stringify({ email }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
       if (!response.ok) {
         toast({
           title: 'Error',
-          description: result.error || 'An error occurred while resetting password',
-          type: 'error',
+          description: data.message || 'An error occurred',
+          variant: 'destructive',
         })
         return false
       }
 
       toast({
         title: 'Success',
-        description: 'Password reset instructions sent to your email',
-        type: 'success',
+        description: 'Password reset email sent',
+        variant: 'default',
       })
       return true
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast({
         title: 'Error',
-        description: 'An error occurred while resetting password',
-        type: 'error',
+        description: 'An error occurred during password reset',
+        variant: 'destructive',
       })
       return false
     }
@@ -138,13 +147,13 @@ export function useAuth() {
         body: JSON.stringify({ token, password }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
       if (!response.ok) {
         toast({
           title: 'Error',
-          description: result.error || 'An error occurred while updating password',
-          type: 'error',
+          description: data.message || 'An error occurred',
+          variant: 'destructive',
         })
         return false
       }
@@ -152,14 +161,16 @@ export function useAuth() {
       toast({
         title: 'Success',
         description: 'Password updated successfully',
-        type: 'success',
+        variant: 'default',
       })
+      router.push('/login')
       return true
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       toast({
         title: 'Error',
-        description: 'An error occurred while updating password',
-        type: 'error',
+        description: 'An error occurred during password update',
+        variant: 'destructive',
       })
       return false
     }

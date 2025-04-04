@@ -1,19 +1,19 @@
-import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import { Prisma } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-
-const prisma = new PrismaClient()
+import { sendApiResponse, handleApiError } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
+import { NextRequest } from 'next/server'
+import { Prisma } from '@prisma/client'
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return sendApiResponse(undefined, 'Unauthorized', 401)
     }
 
     const patient = await prisma.patient.findUnique({
@@ -21,336 +21,176 @@ export async function GET(
       include: {
         status: true,
         payer: true,
+        appointments: {
+          include: {
+            doctor: true,
+            exam: true,
+            status: true
+          }
+        },
         procedures: {
           include: {
             exam: true,
             facility: true,
             physician: true,
-            status: true,
-          },
-          orderBy: {
-            scheduleDate: 'desc',
-          },
-        },
-      },
+            status: true
+          }
+        }
+      }
     })
 
     if (!patient) {
-      return NextResponse.json({ error: 'Patient not found' }, { status: 404 })
+      return sendApiResponse(undefined, 'Patient not found', 404)
     }
 
-    return NextResponse.json(patient)
+    logger.info(`Fetched patient: ${patient.id}`, request)
+    return sendApiResponse(patient)
   } catch (error) {
-    console.error('Error fetching patient:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch patient' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
-export async function PUT(
-  request: Request,
+export async function PATCH(
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  console.log('PUT request received for patient ID:', params.id);
-  
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      console.log('Unauthorized request - no session found');
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+      return sendApiResponse(undefined, 'Unauthorized', 401)
     }
 
-    const id = await Promise.resolve(params.id)
-    const body = await request.json()
-    
-    console.log('Received update request for patient:', id)
-    console.log('Request body:', JSON.stringify(body, null, 2))
-
-    const {
-      firstName,
-      middleName,
-      lastName,
-      dateOfBirth,
-      phone,
-      altNumber,
-      email,
-      doidol,
-      gender,
-      address,
-      city,
-      zip,
-      statusId,
-      payerId,
-      lawyer,
-      attorneyId,
-      orderDate,
-      orderFor,
-      referringDoctorId,
-      procedures,
-    } = body
+    const data = await request.json()
+    logger.info(`Received update request for patient: ${params.id}`, request)
 
     // Validate required fields
-    if (!firstName?.trim() || !lastName?.trim()) {
-      return NextResponse.json(
-        { message: 'First name and last name are required' },
-        { status: 400 }
-      )
+    if (!data.firstName?.trim() || !data.lastName?.trim()) {
+      return sendApiResponse(undefined, 'First name and last name are required', 400)
     }
 
-    if (!dateOfBirth) {
-      return NextResponse.json(
-        { message: 'Date of birth is required' },
-        { status: 400 }
-      )
-    }
-
-    if (!phone?.trim()) {
-      return NextResponse.json(
-        { message: 'Phone number is required' },
-        { status: 400 }
-      )
-    }
-
-    // Validate procedures if provided
-    if (procedures) {
-      if (!Array.isArray(procedures)) {
-        return NextResponse.json(
-          { message: 'Procedures must be an array' },
-          { status: 400 }
-        )
-      }
-
-      for (const proc of procedures) {
-        if (!proc.examId || !proc.statusId) {
-          return NextResponse.json(
-            { message: 'Each procedure must have an exam and status' },
-            { status: 400 }
-          )
-        }
-
-        if (!proc.scheduleDate) {
-          return NextResponse.json(
-            { message: 'Schedule date is required for all procedures' },
-            { status: 400 }
-          )
-        }
-
-        if (!proc.scheduleTime?.trim()) {
-          return NextResponse.json(
-            { message: 'Schedule time is required for all procedures' },
-            { status: 400 }
-          )
-        }
-
-        if (!proc.facilityId) {
-          return NextResponse.json(
-            { message: 'Facility is required for all procedures' },
-            { status: 400 }
-          )
-        }
-
-        if (!proc.physicianId) {
-          return NextResponse.json(
-            { message: 'Physician is required for all procedures' },
-            { status: 400 }
-          )
-        }
-
-        if (proc.scheduleDate && isNaN(new Date(proc.scheduleDate).getTime())) {
-          return NextResponse.json(
-            { message: 'Invalid schedule date format' },
-            { status: 400 }
-          )
-        }
-      }
-    }
-
-    // Set default values for required fields
-    const updateData: Prisma.PatientUpdateInput = {
-      firstName: firstName.trim(),
-      middleName: middleName?.trim() || null,
-      lastName: lastName.trim(),
-      phone: phone?.trim() || null,
-      altNumber: altNumber?.trim() || null,
-      email: email?.trim() || null,
-      gender: gender || null,
-      address: address?.trim() || null,
-      city: city?.trim() || null,
-      zip: zip?.trim() || null,
-      status: statusId ? {
-        connect: { id: statusId }
-      } : undefined,
-      payer: payerId ? {
-        connect: { id: payerId }
-      } : undefined,
-      lawyer: lawyer?.trim() || null,
-      orderFor: orderFor?.trim() || null,
-    }
-
-    // Update dates if provided
-    if (dateOfBirth) {
-      const parsedDateOfBirth = new Date(dateOfBirth)
-      if (!isNaN(parsedDateOfBirth.getTime())) {
-        updateData.dateOfBirth = parsedDateOfBirth
-      }
-    }
-
-    if (orderDate) {
-      const parsedOrderDate = new Date(orderDate)
-      if (!isNaN(parsedOrderDate.getTime())) {
-        updateData.orderDate = parsedOrderDate
-      }
-    }
-
-    console.log('Update data:', updateData)
-
-    // Start a transaction to update patient and procedures
-    console.log('Starting transaction to update patient and procedures');
-    const patient = await prisma.$transaction(async (tx) => {
+    // Update the patient with procedures in a transaction
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       try {
-        console.log('Updating patient with data:', updateData);
-        // Update patient
-        const updatedPatient = await tx.patient.update({
-          where: { id },
-          data: updateData,
-          include: {
-            procedures: {
-              include: {
-                status: true,
-                facility: true,
-                physician: true,
-              },
-              orderBy: {
-                scheduleDate: 'desc',
-              },
-            },
-            payer: true,
-          },
+        // Update the patient
+        const patient = await tx.patient.update({
+          where: { id: params.id },
+          data: {
+            firstName: data.firstName.trim(),
+            middleName: data.middleName?.trim() || null,
+            lastName: data.lastName.trim(),
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+            gender: data.gender || null,
+            phone: data.phone?.trim() || null,
+            altNumber: data.altNumber?.trim() || null,
+            email: data.email?.trim() || null,
+            address: data.address?.trim() || null,
+            city: data.city?.trim() || null,
+            zip: data.zip?.trim() || null,
+            lawyer: data.lawyer?.trim() || null,
+            orderFor: data.orderFor?.trim() || null,
+            orderDate: data.orderDate ? new Date(data.orderDate) : null,
+            status: data.statusId ? {
+              connect: { id: data.statusId }
+            } : undefined,
+            payer: data.payerId ? {
+              connect: { id: data.payerId }
+            } : undefined
+          }
         })
-        console.log('Patient updated successfully:', updatedPatient.id);
+        logger.info(`Updated patient: ${patient.id}`, request)
 
-        // Handle procedures if provided
-        if (procedures && procedures.length > 0) {
-          console.log(`Deleting ${procedures.length} existing procedures`);
+        // Update procedures if provided
+        if (data.procedures && data.procedures.length > 0) {
           // Delete existing procedures
           await tx.procedure.deleteMany({
-            where: { patientId: id }
+            where: { patientId: params.id }
           })
-          console.log('Existing procedures deleted successfully');
+          logger.info(`Deleted existing procedures for patient: ${params.id}`, request)
 
           // Create new procedures
-          for (const proc of procedures) {
-            try {
-              console.log('Processing procedure:', proc);
-              
-              // Validate required fields
-              if (!proc.examId) {
-                throw new Error('Exam ID is required for each procedure');
-              }
-              if (!proc.statusId) {
-                throw new Error('Status ID is required for each procedure');
-              }
-              
-              const procedureData: any = {
-                patient: {
-                  connect: { id }
-                },
-                exam: {
-                  connect: { id: proc.examId.toString() }
-                },
-                scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate) : null,
-                scheduleTime: proc.scheduleTime || '',
-                status: {
-                  connect: { id: proc.statusId.toString() }
-                },
-                lop: proc.lop || null,
-                isCompleted: proc.isCompleted || false
-              }
-
-              // Only add facility if provided
-              if (proc.facilityId) {
-                procedureData.facility = {
-                  connect: { id: proc.facilityId.toString() }
-                }
-              }
-
-              // Only add physician if provided
-              if (proc.physicianId) {
-                procedureData.physician = {
-                  connect: { id: proc.physicianId.toString() }
-                }
-              }
-
-              console.log('Creating procedure with data:', procedureData)
-              const createdProcedure = await tx.procedure.create({
-                data: procedureData
-              })
-              console.log('Procedure created successfully:', createdProcedure.id);
-            } catch (error) {
-              console.error('Error creating procedure:', error, 'Procedure data:', proc)
-              throw new Error(`Failed to create procedure: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          for (const proc of data.procedures) {
+            const procedureData = {
+              patient: {
+                connect: { id: params.id }
+              },
+              exam: {
+                connect: { id: proc.examId }
+              },
+              status: {
+                connect: { id: proc.statusId }
+              },
+              facility: {
+                connect: { id: proc.facilityId }
+              },
+              physician: {
+                connect: { id: proc.physicianId }
+              },
+              scheduleDate: proc.scheduleDate ? new Date(proc.scheduleDate) : new Date(),
+              scheduleTime: proc.scheduleTime || '',
+              lop: proc.lop || null,
+              isCompleted: proc.isCompleted || false
             }
+
+            const createdProcedure = await tx.procedure.create({
+              data: procedureData
+            })
+            logger.info(`Created procedure: ${createdProcedure.id}`, request)
           }
-          console.log('All procedures created successfully');
-        } else {
-          console.log('No procedures to create');
         }
 
-        return updatedPatient
+        return patient
       } catch (error) {
-        console.error('Transaction error:', error)
+        logger.error('Transaction error', error instanceof Error ? error : new Error('Unknown error'), request)
         throw error
       }
     })
-    console.log('Transaction completed successfully');
 
-    return NextResponse.json(patient)
+    logger.info('Patient update completed successfully', request)
+    return sendApiResponse(result)
   } catch (error) {
-    console.error('Error updating patient:', error)
-    
-    // Ensure we always return a properly formatted error response
-    let errorMessage = 'Error updating patient. Please try again.';
-    let statusCode = 500;
-    
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      errorMessage = `Database error: ${error.message}`;
-      statusCode = 400;
-    } else if (error instanceof Prisma.PrismaClientValidationError) {
-      errorMessage = `Validation error: ${error.message}`;
-      statusCode = 400;
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    
-    return NextResponse.json(
-      { message: errorMessage },
-      { status: statusCode }
-    )
-  } finally {
-    await prisma.$disconnect()
+    return handleApiError(error)
   }
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = await Promise.resolve(params.id)
-    await prisma.patient.delete({
-      where: { id },
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return sendApiResponse(undefined, 'Unauthorized', 401)
+    }
+
+    // Delete the patient and related records in a transaction
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      try {
+        // Delete related procedures
+        await tx.procedure.deleteMany({
+          where: { patientId: params.id }
+        })
+        logger.info(`Deleted procedures for patient: ${params.id}`, request)
+
+        // Delete related appointments
+        await tx.appointment.deleteMany({
+          where: { patientId: params.id }
+        })
+        logger.info(`Deleted appointments for patient: ${params.id}`, request)
+
+        // Delete the patient
+        await tx.patient.delete({
+          where: { id: params.id }
+        })
+        logger.info(`Deleted patient: ${params.id}`, request)
+      } catch (error) {
+        logger.error('Transaction error', error instanceof Error ? error : new Error('Unknown error'), request)
+        throw error
+      }
     })
 
-    return NextResponse.json({ message: 'Patient deleted successfully' })
+    logger.info('Patient deletion completed successfully', request)
+    return sendApiResponse({ message: 'Patient deleted successfully' })
   } catch (error) {
-    console.error('Error deleting patient:', error)
-    return NextResponse.json(
-      { message: 'Error deleting patient' },
-      { status: 500 }
-    )
-  } finally {
-    await prisma.$disconnect()
+    return handleApiError(error)
   }
 } 

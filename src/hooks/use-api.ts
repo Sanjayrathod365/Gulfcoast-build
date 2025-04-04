@@ -8,7 +8,7 @@ interface ApiResponse<T> {
   status: number
 }
 
-interface UseApiOptions<T = any> {
+interface UseApiOptions<T = unknown> {
   onSuccess?: (data: T) => void
   onError?: (error: Error) => void
   successMessage?: string
@@ -20,14 +20,14 @@ interface ApiCallOptions {
   errorMessage?: string
 }
 
-export function useApi<T = any>(options: UseApiOptions<T> = {}) {
+export function useApi<T = unknown>(options: UseApiOptions<T> = {}) {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
   const callApi = async <R = T>(
     url: string,
     method: string = 'GET',
-    body?: any,
+    body?: unknown,
     callOptions?: ApiCallOptions
   ): Promise<ApiResponse<R> | null> => {
     try {

@@ -6,20 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getCityStateFromZip } from '@/lib/zipcode'
 import { Loader2, MapPin, Phone, Mail, Building2, Save, X } from 'lucide-react'
 
-interface Facility {
-  id: string
-  name: string
-  address: string
-  city: string
-  state: string
-  zip: string
-  phone: string
-  fax?: string | null
-  email?: string | null
-  mapLink?: string | null
-  status: string
-}
-
 interface FacilityFormData {
   name: string
   address: string

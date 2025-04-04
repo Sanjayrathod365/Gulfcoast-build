@@ -32,9 +32,9 @@ export function usePatientAppointments() {
         success: true,
         data: result,
       }
-    } catch (error) {
-      console.error('Error syncing appointments:', error)
-      const message = error instanceof Error ? error.message : 'Failed to sync appointments'
+    } catch (_error) {
+      console.error('Error syncing appointments:', _error)
+      const message = _error instanceof Error ? _error.message : 'Failed to sync appointments'
       setError(message)
       return {
         success: false,
@@ -61,9 +61,9 @@ export function usePatientAppointments() {
         success: true,
         data,
       }
-    } catch (error) {
-      console.error('Error fetching patient appointments:', error)
-      const message = error instanceof Error ? error.message : 'Failed to fetch patient appointments'
+    } catch (_error) {
+      console.error('Error fetching patient appointments:', _error)
+      const message = _error instanceof Error ? _error.message : 'Failed to fetch patient appointments'
       setError(message)
       return {
         success: false,

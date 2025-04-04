@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation'
 import { use } from 'react'
 import { useSession } from 'next-auth/react'
 
-interface Status {
-  id: string
-  name: string
-  color: string
-}
+// Removed Status interface
 
 interface FormData {
   name: string
@@ -19,7 +15,8 @@ interface FormData {
 export default function EditStatusPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  // Removed session from useSession destructuring
+  const { status: sessionStatus } = useSession()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState<FormData>({

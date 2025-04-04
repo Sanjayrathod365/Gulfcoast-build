@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2, Plus, Calendar, Clock, User, Phone, Mail, MapPin, FileText, CheckCircle, XCircle, AlertCircle, Filter, Stethoscope, Building } from 'lucide-react'
+import { Plus, Calendar, Clock, User, Phone, Mail, MapPin, FileText, CheckCircle, XCircle, AlertCircle, Filter, Stethoscope, Building } from 'lucide-react'
 import { useAppointment } from '@/hooks/use-appointment'
 import { usePatientAppointments } from '@/hooks/use-patient-appointments'
 import { Appointment } from '@/types/appointment'
@@ -12,7 +12,7 @@ import { Patient } from '@/types/patient'
 import { Doctor } from '@/types/doctor'
 import { Exam, Facility } from '@/types'
 import { AppointmentForm } from '@/components/appointments/AppointmentForm'
-import { format, isToday, parseISO } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, addMonths, subMonths, isSameDay } from 'date-fns'
 import { Procedure } from '@/types/procedure'
 
 export default function AppointmentsPage() {
@@ -29,7 +29,7 @@ export default function AppointmentsPage() {
   const { getAppointments, createAppointment, updateAppointment, deleteAppointment } = useAppointment()
   const { syncAppointments } = usePatientAppointments()
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -170,7 +170,7 @@ export default function AppointmentsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getAppointments, filter, setAppointments, setPatients, setDoctors, setExams, setFacilities, setLoading, setError])
 
   // Sync appointments when the component mounts
   useEffect(() => {
@@ -236,12 +236,12 @@ export default function AppointmentsPage() {
     }
 
     syncAndFetchAppointments()
-  }, [])
+  }, [fetchAppointments, syncAppointments, setLoading, setError])
 
   // Fetch appointments when filter changes
   useEffect(() => {
     fetchAppointments()
-  }, [filter])
+  }, [filter, fetchAppointments])
 
   const handleSubmit = async (data: Omit<Appointment, 'id'> | Partial<Appointment>) => {
     try {
@@ -445,6 +445,7 @@ export default function AppointmentsPage() {
                 setIsFormOpen(false)
                 setSelectedAppointment(null)
               }}
+              patients={Object.values(patients)}
             />
           </CardContent>
         </Card>

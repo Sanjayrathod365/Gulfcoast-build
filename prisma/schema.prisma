@@ -8,27 +8,25 @@ datasource db {
 }
 
 model Appointment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  patientId String   @db.ObjectId
-  patient   Patient  @relation(fields: [patientId], references: [id])
-  doctorId  String?  @db.ObjectId
-  doctor    Doctor?  @relation(fields: [doctorId], references: [id])
-  examId    String?  @db.ObjectId
-  exam      Exam?    @relation(fields: [examId], references: [id])
-  date      DateTime @db.Date
-  time      String
-  type      String
-  status    String
-  notes     String?
-  createdAt DateTime @db.Date
-  updatedAt DateTime @db.Date
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt   DateTime  @db.Date
+  date        DateTime  @db.Date
+  doctorId    String    @db.ObjectId
+  doctor      Doctor    @relation(fields: [doctorId], references: [id])
+  examId      String?   @db.ObjectId
+  exam        Exam?     @relation(fields: [examId], references: [id])
+  patientId   String    @db.ObjectId
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  statusId    String    @db.ObjectId
+  status      Status    @relation(fields: [statusId], references: [id])
+  time        String
+  updatedAt   DateTime  @db.Date
 }
 
 model Attorney {
   id            String         @id @default(auto()) @map("_id") @db.ObjectId
   address       String
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  barNumber     Json?
+  barNumber     String?
   city          String
   createdAt     DateTime       @db.Date
   email         String
@@ -68,31 +66,30 @@ model CaseManager {
 }
 
 model Doctor {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  address     String
-  clinicName  String
-  createdAt   DateTime      @db.Date
-  email       String
-  faxNumber   String
-  hasLogin    Boolean
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  mapLink     Json?
-  name        String
-  phoneNumber String
-  prefix      String
-  status      String
-  updatedAt   DateTime      @db.Date
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  address      String
+  clinicName   String
+  createdAt    DateTime      @db.Date
+  email        String
+  faxNumber    String
+  hasLogin     Boolean
+  mapLink      String?
+  name         String
+  phoneNumber  String
+  prefix       String
+  status       String
+  updatedAt    DateTime      @db.Date
   appointments Appointment[]
 }
 
 model Event {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  patientId String?  @db.ObjectId
-  patient   Patient? @relation(fields: [patientId], references: [id])
-  userId    String?  @db.ObjectId
-  user      User?    @relation(fields: [userId], references: [id])
-  createdAt DateTime @db.Date
-  updatedAt DateTime @db.Date
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  patientId String?   @db.ObjectId
+  patient   Patient?  @relation(fields: [patientId], references: [id])
+  userId    String?   @db.ObjectId
+  user      User?     @relation(fields: [userId], references: [id])
+  createdAt DateTime  @db.Date
+  updatedAt DateTime  @db.Date
 }
 
 model Exam {
@@ -137,19 +134,15 @@ model Patient {
   city         String?
   createdAt    DateTime      @db.Date
   dateOfBirth  DateTime      @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  doidol       Json?
+  doidol       String?
   email        String?
   firstName    String
   gender       String?
   lastName     String
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  lawyer       Json?
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  middleName   Json?
+  lawyer       String?
+  middleName   String?
   orderDate    DateTime?     @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  orderFor     Json?
+  orderFor     String?
   payerId      String?       @db.ObjectId
   payer        Payer?        @relation(fields: [payerId], references: [id])
   phone        String
@@ -173,26 +166,22 @@ model Payer {
 }
 
 model Physician {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  address     Json?
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  clinicName  Json?
-  createdAt   DateTime     @db.Date
-  email       String       @unique
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  faxNumber   Json?
-  isActive    Boolean
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  mapLink     Json?
-  name        String
-  npiNumber   String?
-  phoneNumber String?
-  prefix      String?
-  status      String
-  suffix      String?
-  updatedAt   DateTime     @db.Date
-  procedures  Procedure[]
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  address      String?
+  clinicName   String?
+  createdAt    DateTime      @db.Date
+  email        String        @unique
+  faxNumber    String?
+  isActive     Boolean
+  mapLink      String?
+  name         String
+  npiNumber    String?
+  phoneNumber  String?
+  prefix       String?
+  status       String
+  suffix       String?
+  updatedAt    DateTime      @db.Date
+  procedures   Procedure[]
 }
 
 model Procedure {
@@ -203,8 +192,7 @@ model Procedure {
   facilityId   String     @db.ObjectId
   facility     Facility   @relation(fields: [facilityId], references: [id])
   isCompleted  Boolean
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  lop          Json?
+  lop          String?
   patientId    String     @db.ObjectId
   patient      Patient    @relation(fields: [patientId], references: [id])
   physicianId  String     @db.ObjectId
@@ -217,13 +205,14 @@ model Procedure {
 }
 
 model Status {
-  id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  color      String
-  createdAt  DateTime     @db.Date
-  name       String       @unique
-  updatedAt  DateTime     @db.Date
-  patients   Patient[]
-  procedures Procedure[]
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  color        String
+  createdAt    DateTime      @db.Date
+  name         String
+  updatedAt    DateTime      @db.Date
+  patients     Patient[]
+  procedures   Procedure[]
+  appointments Appointment[]
 }
 
 model SubExam {
@@ -250,14 +239,14 @@ model Task {
 }
 
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt    DateTime @db.Date
-  email        String   @unique
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt    DateTime      @db.Date
+  email        String        @unique
   name         String
   password     String
   role         String
-  updatedAt    DateTime @db.Date
-  attorney     Attorney?
-  assignedTasks Task[]
+  updatedAt    DateTime      @db.Date
+  attorneys    Attorney[]
   events       Event[]
+  tasks        Task[]
 }

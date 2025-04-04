@@ -3,8 +3,9 @@ import { apiResponseSchema } from './validations'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { z } from 'zod'
 
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
   success: boolean
   data?: T
   error?: string
@@ -44,7 +45,7 @@ export function handleApiError(error: unknown): NextResponse {
 }
 
 export function validateRequest<T>(
-  schema: any,
+  schema: z.ZodSchema<T>,
   data: unknown
 ): { success: boolean; data?: T; error?: string } {
   try {

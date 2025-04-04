@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { doctorSchema } from '@/lib/validations'
 import { sendApiResponse, handleApiError } from '@/lib/api-utils'
@@ -30,7 +29,7 @@ export async function PUT(
 ) {
   try {
     const data = await request.json()
-    const { id, password, ...updateData } = data
+    const { password, ...updateData } = data
 
     // Validate update data
     const validation = doctorSchema.partial().safeParse(updateData)

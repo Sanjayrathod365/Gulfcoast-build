@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { doctorSchema } from '@/lib/validations'
 import { sendApiResponse, handleApiError, requireRole } from '@/lib/api-utils'
 import { logger } from '@/lib/logger'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 
 // GET /api/doctors - Get all doctors
 export async function GET(request: NextRequest) {

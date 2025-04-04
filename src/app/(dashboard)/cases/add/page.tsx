@@ -6,18 +6,14 @@ import { motion } from 'framer-motion'
 import { Loader2, ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { useApi } from '@/hooks/use-api'
+import { useToast } from '@/hooks/use-toast'
+import { Button } from '@/components/ui/button'
 
 interface Patient {
   id: string
