@@ -418,12 +418,12 @@ export default function DashboardPage() {
                         <Clock className="h-5 w-5 mr-2 text-yellow-600" />
                         <CardTitle className="text-yellow-700">In Progress</CardTitle>
                       </div>
-                    </CardHeader>
+          </CardHeader>
                     <CardContent className="pt-6">
                       <p className="text-3xl font-bold text-gray-900">{data.cases.inProgress}</p>
                       <p className="text-sm text-gray-500 mt-2">Cases in progress</p>
-                    </CardContent>
-                  </Card>
+          </CardContent>
+        </Card>
                 </motion.div>
                 
                 <motion.div
@@ -438,12 +438,12 @@ export default function DashboardPage() {
                         <AlertTriangle className="h-5 w-5 mr-2 text-gray-600" />
                         <CardTitle className="text-gray-700">Closed</CardTitle>
                       </div>
-                    </CardHeader>
+          </CardHeader>
                     <CardContent className="pt-6">
                       <p className="text-3xl font-bold text-gray-900">{data.cases.closed}</p>
                       <p className="text-sm text-gray-500 mt-2">Cases closed</p>
-                    </CardContent>
-                  </Card>
+          </CardContent>
+        </Card>
                 </motion.div>
                 
                 <motion.div
@@ -458,12 +458,12 @@ export default function DashboardPage() {
                         <FileText className="h-5 w-5 mr-2 text-blue-600" />
                         <CardTitle className="text-blue-700">Total</CardTitle>
                       </div>
-                    </CardHeader>
+          </CardHeader>
                     <CardContent className="pt-6">
                       <p className="text-3xl font-bold text-gray-900">{data.cases.total}</p>
                       <p className="text-sm text-gray-500 mt-2">Total cases</p>
-                    </CardContent>
-                  </Card>
+          </CardContent>
+        </Card>
                 </motion.div>
               </div>
             </motion.div>
