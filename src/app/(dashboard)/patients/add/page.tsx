@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { format } from 'date-fns'
+import { Loader2, Plus, X, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 interface Payer {
   id: string
@@ -433,266 +436,365 @@ export default function AddPatientPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">Add New Patient</h1>
-              <button
-                type="button"
-                onClick={() => router.push('/patients')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Back to Patients
-              </button>
-            </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center items-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-16 w-16"
+        >
+          <Loader2 className="h-16 w-16 text-indigo-600" />
+        </motion.div>
+      </div>
+    )
+  }
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
-                {error}
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg max-w-md"
+          >
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
               </div>
-            )}
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">{error}</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    )
+  }
 
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="px-8 py-6 bg-gradient-to-r from-indigo-600 to-indigo-700"
+          >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-2xl font-bold text-white"
+              >
+                Add New Patient
+              </motion.h1>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/patients')}
+                className="inline-flex items-center px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Patients
+              </motion.button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="px-8 py-6"
+          >
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Patient Information Section */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Patient Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-200"
+              >
+                <div className="px-6 py-5 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Patient Information
+                  </h3>
+                </div>
+                
+                <div className="px-6 py-5 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.7 }}
+                    className="sm:col-span-2"
+                  >
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
                       First Name *
                     </label>
                     <input
                       type="text"
+                      id="firstName"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.8 }}
+                    className="sm:col-span-2"
+                  >
+                    <label htmlFor="middleName" className="block text-sm font-medium text-gray-700">
                       Middle Name
                     </label>
                     <input
                       type="text"
                       name="middleName"
+                      id="middleName"
                       value={formData.middleName}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.9 }}
+                    className="sm:col-span-2"
+                  >
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
                       Last Name *
                     </label>
                     <input
                       type="text"
+                      id="lastName"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Date of Birth
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
+                      Date of Birth *
                     </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="dateOfBirth"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        placeholder="MM/DD/YYYY"
-                        pattern="\d{2}/\d{2}/\d{4}"
-                        maxLength={10}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const dateInput = document.createElement('input');
-                          dateInput.type = 'date';
-                          dateInput.style.display = 'none';
-                          document.body.appendChild(dateInput);
-                          dateInput.click();
-                          dateInput.addEventListener('change', (e) => {
-                            const date = new Date((e.target as HTMLInputElement).value);
-                            const month = String(date.getMonth() + 1).padStart(2, '0');
-                            const day = String(date.getDate()).padStart(2, '0');
-                            const year = date.getFullYear();
-                            setFormData(prev => ({
-                              ...prev,
-                              dateOfBirth: `${month}/${day}/${year}`
-                            }));
-                            document.body.removeChild(dateInput);
-                          });
-                        }}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3"
-                      >
-                        <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                    <input
+                      type="text"
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      required
+                      placeholder="MM/DD/YYYY"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
+                    />
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Phone
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.1 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      Phone *
                     </label>
                     <input
                       type="tel"
+                      id="phone"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.2 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="altNumber" className="block text-sm font-medium text-gray-700">
                       Alternate Phone
                     </label>
                     <input
                       type="tel"
                       name="altNumber"
+                      id="altNumber"
                       value={formData.altNumber}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.3 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                       Email
                     </label>
                     <input
                       type="email"
                       name="email"
+                      id="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.4 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="doidol" className="block text-sm font-medium text-gray-700">
                       DOIDOL
                     </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="doidol"
-                        value={formData.doidol}
-                        onChange={handleChange}
-                        placeholder="MM/DD/YYYY"
-                        pattern="\d{2}/\d{2}/\d{4}"
-                        maxLength={10}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const dateInput = document.createElement('input');
-                          dateInput.type = 'date';
-                          dateInput.style.display = 'none';
-                          document.body.appendChild(dateInput);
-                          dateInput.click();
-                          dateInput.addEventListener('change', (e) => {
-                            const date = new Date((e.target as HTMLInputElement).value);
-                            const month = String(date.getMonth() + 1).padStart(2, '0');
-                            const day = String(date.getDate()).padStart(2, '0');
-                            const year = date.getFullYear();
-                            setFormData(prev => ({
-                              ...prev,
-                              doidol: `${month}/${day}/${year}`
-                            }));
-                            document.body.removeChild(dateInput);
-                          });
-                        }}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3"
-                      >
-                        <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                    <input
+                      type="text"
+                      name="doidol"
+                      id="doidol"
+                      value={formData.doidol}
+                      onChange={handleChange}
+                      placeholder="MM/DD/YYYY"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.5 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
                       Gender
                     </label>
                     <select
                       name="gender"
+                      id="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
                       <option value="unknown">Select Gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                       <option value="other">Other</option>
                     </select>
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.6 }}
+                    className="sm:col-span-6"
+                  >
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">
                       Address
                     </label>
                     <input
                       type="text"
                       name="address"
+                      id="address"
                       value={formData.address}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.7 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
                       City
                     </label>
                     <input
                       type="text"
                       name="city"
+                      id="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.8 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="zip" className="block text-sm font-medium text-gray-700">
                       ZIP Code
                     </label>
                     <input
                       type="text"
                       name="zip"
+                      id="zip"
                       value={formData.zip}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 1.9 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="statusId" className="block text-sm font-medium text-gray-700">
                       Status
                     </label>
                     <select
                       name="statusId"
+                      id="statusId"
                       value={formData.statusId}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
                       <option value="">Select Status</option>
                       {statuses.map((status) => (
@@ -701,17 +803,23 @@ export default function AddPatientPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 2 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="payerId" className="block text-sm font-medium text-gray-700">
                       Payer
                     </label>
                     <select
                       name="payerId"
+                      id="payerId"
                       value={formData.payerId}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
                       <option value="">Select Payer</option>
                       {payers.map((payer) => (
@@ -720,306 +828,313 @@ export default function AddPatientPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 2.1 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="lawyer" className="block text-sm font-medium text-gray-700">
                       Lawyer
+                    </label>
+                    <input
+                      type="text"
+                      name="lawyer"
+                      id="lawyer"
+                      value={formData.lawyer}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 2.2 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="attorneyId" className="block text-sm font-medium text-gray-700">
+                      Attorney
                     </label>
                     <select
                       name="attorneyId"
+                      id="attorneyId"
                       value={formData.attorneyId}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
-                      <option value="">Select Lawyer</option>
+                      <option value="">Select Attorney</option>
                       {attorneys.map((attorney) => (
                         <option key={attorney.id} value={attorney.id}>
                           {attorney.user.name}
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 2.3 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="orderDate" className="block text-sm font-medium text-gray-700">
                       Order Date
                     </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="orderDate"
-                        value={formData.orderDate}
-                        onChange={handleChange}
-                        placeholder="MM/DD/YYYY"
-                        pattern="\d{2}/\d{2}/\d{4}"
-                        maxLength={10}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const dateInput = document.createElement('input');
-                          dateInput.type = 'date';
-                          dateInput.style.display = 'none';
-                          document.body.appendChild(dateInput);
-                          dateInput.click();
-                          dateInput.addEventListener('change', (e) => {
-                            const date = new Date((e.target as HTMLInputElement).value);
-                            const month = String(date.getMonth() + 1).padStart(2, '0');
-                            const day = String(date.getDate()).padStart(2, '0');
-                            const year = date.getFullYear();
-                            setFormData(prev => ({
-                              ...prev,
-                              orderDate: `${month}/${day}/${year}`
-                            }));
-                            document.body.removeChild(dateInput);
-                          });
-                        }}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3"
-                      >
-                        <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                    <input
+                      type="text"
+                      name="orderDate"
+                      id="orderDate"
+                      value={formData.orderDate}
+                      onChange={handleChange}
+                      placeholder="MM/DD/YYYY"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </motion.div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 2.4 }}
+                    className="sm:col-span-3"
+                  >
+                    <label htmlFor="orderFor" className="block text-sm font-medium text-gray-700">
                       Order For
                     </label>
                     <input
                       type="text"
                       name="orderFor"
+                      id="orderFor"
                       value={formData.orderFor}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Referring Doctor
-                    </label>
-                    <select
-                      name="referringDoctorId"
-                      value={formData.referringDoctorId}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      <option value="">Select Doctor</option>
-                      {physicians.map((doctor) => (
-                        <option key={doctor.id} value={doctor.id}>
-                          {doctor.prefix} {doctor.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  </motion.div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Procedures Section */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-medium text-gray-900">Procedures</h2>
-                  <button
-                    type="button"
-                    onClick={addProcedure}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Add Procedure
-                  </button>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-200"
+              >
+                <div className="px-6 py-5 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Procedures
+                    </h3>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={addProcedure}
+                      className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Procedure
+                    </motion.button>
+                  </div>
                 </div>
 
-                {formData.procedures.map((procedure, index) => (
-                  <div key={index} className="bg-white p-6 rounded-lg shadow-sm mb-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-md font-medium text-gray-900">Procedure {index + 1}</h3>
-                      <button
-                        type="button"
-                        onClick={() => removeProcedure(index)}
-                        className="text-red-600 hover:text-red-900"
+                <div className="px-6 py-5 space-y-6">
+                  <AnimatePresence>
+                    {formData.procedures.map((procedure, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="bg-gray-50 rounded-lg p-6 space-y-4"
                       >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Exam Name *
-                        </label>
-                        <select
-                          value={procedure.examId}
-                          onChange={(e) => updateProcedure(index, 'examId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        >
-                          <option value="">Select Exam</option>
-                          {exams.map((exam) => (
-                            <option key={exam.id} value={exam.id}>
-                              {exam.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Schedule Date
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={procedure.scheduleDate}
-                            onChange={(e) => updateProcedure(index, 'scheduleDate', e.target.value)}
-                            placeholder="MM/DD/YYYY"
-                            pattern="\d{2}/\d{2}/\d{4}"
-                            maxLength={10}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          />
-                          <button
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-md font-medium text-gray-900">
+                            Procedure {index + 1}
+                          </h4>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             type="button"
-                            onClick={() => {
-                              const dateInput = document.createElement('input');
-                              dateInput.type = 'date';
-                              dateInput.style.display = 'none';
-                              document.body.appendChild(dateInput);
-                              dateInput.click();
-                              dateInput.addEventListener('change', (e) => {
-                                const date = new Date((e.target as HTMLInputElement).value);
-                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                const day = String(date.getDate()).padStart(2, '0');
-                                const year = date.getFullYear();
-                                updateProcedure(index, 'scheduleDate', `${month}/${day}/${year}`);
-                                document.body.removeChild(dateInput);
-                              });
-                            }}
-                            className="absolute inset-y-0 right-0 flex items-center pr-3"
+                            onClick={() => removeProcedure(index)}
+                            className="text-red-600 hover:text-red-800 transition-colors"
                           >
-                            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                            <X className="h-4 w-4" />
+                          </motion.button>
                         </div>
-                      </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Schedule Time
-                        </label>
-                        <input
-                          type="time"
-                          value={procedure.scheduleTime}
-                          onChange={(e) => updateProcedure(index, 'scheduleTime', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
-                      </div>
+                        <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Exam *
+                            </label>
+                            <select
+                              id={`procedures.${index}.examId`}
+                              name={`procedures.${index}.examId`}
+                              value={procedure.examId}
+                              onChange={(e) => updateProcedure(index, 'examId', e.target.value)}
+                              required
+                              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            >
+                              <option value="">Select Exam</option>
+                              {exams.map((exam) => (
+                                <option key={exam.id} value={exam.id}>
+                                  {exam.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Facility
-                        </label>
-                        <select
-                          value={procedure.facilityId}
-                          onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        >
-                          <option value="">Select Facility</option>
-                          {facilities.map((facility) => (
-                            <option key={facility.id} value={facility.id}>
-                              {facility.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Schedule Date *
+                            </label>
+                            <input
+                              type="text"
+                              id={`procedures.${index}.scheduleDate`}
+                              name={`procedures.${index}.scheduleDate`}
+                              value={procedure.scheduleDate}
+                              onChange={(e) => updateProcedure(index, 'scheduleDate', e.target.value)}
+                              required
+                              placeholder="MM/DD/YYYY"
+                              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Physician
-                        </label>
-                        <select
-                          value={procedure.physicianId}
-                          onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        >
-                          <option value="">Select Physician</option>
-                          {physicians.map((physician) => (
-                            <option key={physician.id} value={physician.id}>
-                              {physician.prefix} {physician.name} {physician.suffix}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Schedule Time *
+                            </label>
+                            <input
+                              type="time"
+                              id={`procedures.${index}.scheduleTime`}
+                              name={`procedures.${index}.scheduleTime`}
+                              value={procedure.scheduleTime}
+                              onChange={(e) => updateProcedure(index, 'scheduleTime', e.target.value)}
+                              required
+                              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Status *
-                        </label>
-                        <select
-                          value={procedure.statusId}
-                          onChange={(e) => updateProcedure(index, 'statusId', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        >
-                          <option value="">Select Status</option>
-                          {statuses.map((status) => (
-                            <option key={status.id} value={status.id}>
-                              {status.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Facility *
+                            </label>
+                            <select
+                              id={`procedures.${index}.facilityId`}
+                              name={`procedures.${index}.facilityId`}
+                              value={procedure.facilityId}
+                              onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
+                              required
+                              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            >
+                              <option value="">Select Facility</option>
+                              {facilities.map((facility) => (
+                                <option key={facility.id} value={facility.id}>
+                                  {facility.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          LOP
-                        </label>
-                        <input
-                          type="text"
-                          value={procedure.lop}
-                          onChange={(e) => updateProcedure(index, 'lop', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Physician *
+                            </label>
+                            <select
+                              id={`procedures.${index}.physicianId`}
+                              name={`procedures.${index}.physicianId`}
+                              value={procedure.physicianId}
+                              onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
+                              required
+                              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            >
+                              <option value="">Select Physician</option>
+                              {physicians.map((physician) => (
+                                <option key={physician.id} value={physician.id}>
+                                  {physician.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={procedure.isCompleted}
-                          onChange={(e) => updateProcedure(index, 'isCompleted', e.target.checked)}
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <label className="ml-2 block text-sm text-gray-900">
-                          Completed
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Status *
+                            </label>
+                            <select
+                              id={`procedures.${index}.statusId`}
+                              name={`procedures.${index}.statusId`}
+                              value={procedure.statusId}
+                              onChange={(e) => updateProcedure(index, 'statusId', e.target.value)}
+                              required
+                              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            >
+                              <option value="">Select Status</option>
+                              {statuses.map((status) => (
+                                <option key={status.id} value={status.id}>
+                                  {status.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-              <div className="flex justify-end space-x-3">
-                <button
+                          <div className="sm:col-span-2">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={procedure.isCompleted}
+                                onChange={(e) => updateProcedure(index, 'isCompleted', e.target.checked)}
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Completed
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+                className="flex justify-end gap-4"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={() => router.push('/patients')}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Cancel
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  {loading ? 'Creating...' : 'Create Patient'}
-                </button>
-              </div>
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
+                  Create Patient
+                </motion.button>
+              </motion.div>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 } 

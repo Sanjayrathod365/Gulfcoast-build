@@ -17,18 +17,40 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate')
     const patientId = searchParams.get('patientId')
 
+    console.log('Fetching appointments with params:', {
+      startDate,
+      endDate,
+      patientId
+    })
+
     const where: Record<string, any> = {}
 
-    if (startDate && endDate) {
-      where.date = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+    if (startDate) {
+      const start = new Date(startDate)
+      start.setHours(0, 0, 0, 0)
+      
+      if (endDate) {
+        const end = new Date(endDate)
+        end.setHours(23, 59, 59, 999)
+        
+        where.date = {
+          gte: start,
+          lte: end,
+        }
+      } else {
+        where.date = {
+          gte: start,
+        }
       }
+      
+      console.log('Date filter:', where.date)
     }
 
     if (patientId) {
       where.patientId = patientId
     }
+
+    console.log('Final where clause:', where)
 
     const appointments = await prisma.appointment.findMany({
       where,
@@ -39,6 +61,13 @@ export async function GET(request: NextRequest) {
         date: 'asc',
       },
     })
+
+    console.log(`Found ${appointments.length} appointments`)
+    
+    // Log the first few appointments for debugging
+    if (appointments.length > 0) {
+      console.log('Sample appointments:', appointments.slice(0, 2))
+    }
 
     return NextResponse.json(appointments)
   } catch (error) {
@@ -55,6 +84,15 @@ export async function POST(request: NextRequest) {
     const data = await request.json()
     const { patientId, date, time, type, status = 'scheduled', notes } = data
 
+    console.log('Creating appointment with data:', {
+      patientId,
+      date,
+      time,
+      type,
+      status,
+      notes
+    })
+
     const appointmentData = {
       patientId,
       date: new Date(date),
@@ -70,6 +108,8 @@ export async function POST(request: NextRequest) {
         patient: true,
       },
     })
+
+    console.log('Created appointment:', appointment)
 
     return NextResponse.json(appointment)
   } catch (error) {

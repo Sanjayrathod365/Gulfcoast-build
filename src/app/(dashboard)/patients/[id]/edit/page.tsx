@@ -740,18 +740,27 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg max-w-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">{error}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -760,10 +769,19 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
   if (!formData) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            Patient not found
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg max-w-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">Patient not found</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -771,508 +789,518 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">Edit Patient</h1>
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-8 py-6 bg-gradient-to-r from-indigo-600 to-indigo-700">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h1 className="text-2xl font-bold text-white">Edit Patient</h1>
               <button
                 type="button"
                 onClick={() => router.push('/patients')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors"
               >
                 Back to Patients
               </button>
             </div>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8 divide-y divide-gray-200">
-              <div className="space-y-8 divide-y divide-gray-200">
-                <div>
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+          <div className="px-8 py-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="px-6 py-5 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">
                     Patient Information
                   </h3>
-                  
-                  <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <div className="sm:col-span-2">
-                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                        First Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                </div>
+                
+                <div className="px-6 py-5 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-2">
-                      <label htmlFor="middleName" className="block text-sm font-medium text-gray-700">
-                        Middle Name
-                      </label>
-                      <input
-                        type="text"
-                        name="middleName"
-                        id="middleName"
-                        value={formData.middleName}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="middleName" className="block text-sm font-medium text-gray-700">
+                      Middle Name
+                    </label>
+                    <input
+                      type="text"
+                      name="middleName"
+                      id="middleName"
+                      value={formData.middleName}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-2">
-                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                        Last Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
-                        Date of Birth *
-                      </label>
-                      <input
-                        type="text"
-                        id="dateOfBirth"
-                        name="dateOfBirth"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        required
-                        placeholder="MM/DD/YYYY"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
+                      Date of Birth *
+                    </label>
+                    <input
+                      type="text"
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      required
+                      placeholder="MM/DD/YYYY"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                        Phone *
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="altNumber" className="block text-sm font-medium text-gray-700">
-                        Alternate Phone
-                      </label>
-                      <input
-                        type="tel"
-                        name="altNumber"
-                        id="altNumber"
-                        value={formData.altNumber}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="altNumber" className="block text-sm font-medium text-gray-700">
+                      Alternate Phone
+                    </label>
+                    <input
+                      type="tel"
+                      name="altNumber"
+                      id="altNumber"
+                      value={formData.altNumber}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      id="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="doidol" className="block text-sm font-medium text-gray-700">
-                        DOIDOL
-                      </label>
-                      <input
-                        type="text"
-                        name="doidol"
-                        id="doidol"
-                        value={formData.doidol}
-                        onChange={handleChange}
-                        placeholder="MM/DD/YYYY"
-                        pattern="\d{2}/\d{2}/\d{4}"
-                        maxLength={10}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="doidol" className="block text-sm font-medium text-gray-700">
+                      DOIDOL
+                    </label>
+                    <input
+                      type="text"
+                      name="doidol"
+                      id="doidol"
+                      value={formData.doidol}
+                      onChange={handleChange}
+                      placeholder="MM/DD/YYYY"
+                      pattern="\d{2}/\d{2}/\d{4}"
+                      maxLength={10}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-                        Gender
-                      </label>
-                      <select
-                        name="gender"
-                        id="gender"
-                        value={formData.gender}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="unknown">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
+                      Gender
+                    </label>
+                    <select
+                      name="gender"
+                      id="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="unknown">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
 
-                    <div className="sm:col-span-6">
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        id="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-6">
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      name="address"
+                      id="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        id="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      id="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="zip" className="block text-sm font-medium text-gray-700">
-                        ZIP Code
-                      </label>
-                      <input
-                        type="text"
-                        name="zip"
-                        id="zip"
-                        value={formData.zip}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="zip" className="block text-sm font-medium text-gray-700">
+                      ZIP Code
+                    </label>
+                    <input
+                      type="text"
+                      name="zip"
+                      id="zip"
+                      value={formData.zip}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="statusId" className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <select
-                        name="statusId"
-                        id="statusId"
-                        value={formData.statusId}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="">Select Status</option>
-                        {statuses.map((status) => (
-                          <option key={status.id} value={status.id}>
-                            {status.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="statusId" className="block text-sm font-medium text-gray-700">
+                      Status
+                    </label>
+                    <select
+                      name="statusId"
+                      id="statusId"
+                      value={formData.statusId}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Select Status</option>
+                      {statuses.map((status) => (
+                        <option key={status.id} value={status.id}>
+                          {status.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="payerId" className="block text-sm font-medium text-gray-700">
-                        Payer
-                      </label>
-                      <select
-                        name="payerId"
-                        id="payerId"
-                        value={formData.payerId}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="">Select Payer</option>
-                        {payers.map((payer) => (
-                          <option key={payer.id} value={payer.id}>
-                            {payer.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="payerId" className="block text-sm font-medium text-gray-700">
+                      Payer
+                    </label>
+                    <select
+                      name="payerId"
+                      id="payerId"
+                      value={formData.payerId}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Select Payer</option>
+                      {payers.map((payer) => (
+                        <option key={payer.id} value={payer.id}>
+                          {payer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="attorneyId" className="block text-sm font-medium text-gray-700">
-                        Lawyer
-                      </label>
-                      <select
-                        name="attorneyId"
-                        id="attorneyId"
-                        value={formData.attorneyId || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="">Select Lawyer</option>
-                        {attorneys.map((attorney) => (
-                          <option key={attorney.id} value={attorney.id}>
-                            {attorney.user.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="lawyer" className="block text-sm font-medium text-gray-700">
+                      Lawyer
+                    </label>
+                    <input
+                      type="text"
+                      name="lawyer"
+                      id="lawyer"
+                      value={formData.lawyer}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="orderDate" className="block text-sm font-medium text-gray-700">
-                        Order Date
-                      </label>
-                      <input
-                        type="text"
-                        name="orderDate"
-                        id="orderDate"
-                        value={formData.orderDate}
-                        onChange={handleChange}
-                        placeholder="MM/DD/YYYY"
-                        pattern="\d{2}/\d{2}/\d{4}"
-                        maxLength={10}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="attorneyId" className="block text-sm font-medium text-gray-700">
+                      Attorney
+                    </label>
+                    <select
+                      name="attorneyId"
+                      id="attorneyId"
+                      value={formData.attorneyId}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Select Attorney</option>
+                      {attorneys.map((attorney) => (
+                        <option key={attorney.id} value={attorney.id}>
+                          {attorney.user.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="orderFor" className="block text-sm font-medium text-gray-700">
-                        Order For
-                      </label>
-                      <input
-                        type="text"
-                        name="orderFor"
-                        id="orderFor"
-                        value={formData.orderFor}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="orderDate" className="block text-sm font-medium text-gray-700">
+                      Order Date
+                    </label>
+                    <input
+                      type="text"
+                      name="orderDate"
+                      id="orderDate"
+                      value={formData.orderDate}
+                      onChange={handleChange}
+                      placeholder="MM/DD/YYYY"
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="referringDoctorId" className="block text-sm font-medium text-gray-700">
-                        Referring Doctor
-                      </label>
-                      <select
-                        name="referringDoctorId"
-                        id="referringDoctorId"
-                        value={formData.referringDoctorId || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="">Select Doctor</option>
-                        {doctors.map((doctor) => (
-                          <option key={doctor.id} value={doctor.id}>
-                            {doctor.prefix} {doctor.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="sm:col-span-3">
+                    <label htmlFor="orderFor" className="block text-sm font-medium text-gray-700">
+                      Order For
+                    </label>
+                    <input
+                      type="text"
+                      name="orderFor"
+                      id="orderFor"
+                      value={formData.orderFor}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <label htmlFor="referringDoctorId" className="block text-sm font-medium text-gray-700">
+                      Referring Doctor
+                    </label>
+                    <select
+                      name="referringDoctorId"
+                      id="referringDoctorId"
+                      value={formData.referringDoctorId || ''}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Select Doctor</option>
+                      {doctors.map((doctor) => (
+                        <option key={doctor.id} value={doctor.id}>
+                          {doctor.prefix} {doctor.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
 
               {/* Procedures Section */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-medium text-gray-900">Procedures</h2>
-                  <button
-                    type="button"
-                    onClick={addProcedure}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Add Procedure
-                  </button>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="px-6 py-5 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Procedures
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={addProcedure}
+                      className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      Add Procedure
+                    </button>
+                  </div>
                 </div>
 
-                {formData.procedures.map((procedure, index) => (
-                  <div key={index} className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Procedure {index + 1}</h3>
-                      <button
-                        type="button"
-                        onClick={() => removeProcedure(index)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Exam Name *
-                        </label>
-                        <select
-                          id={`procedures.${index}.examId`}
-                          name={`procedures.${index}.examId`}
-                          value={procedure.examId}
-                          onChange={(e) => updateProcedure(index, 'examId', e.target.value)}
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                <div className="px-6 py-5 space-y-6">
+                  {formData.procedures.map((procedure, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-6 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-md font-medium text-gray-900">
+                          Procedure {index + 1}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => removeProcedure(index)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
                         >
-                          <option value="">Select Exam</option>
-                          {exams.map((exam) => (
-                            <option key={exam.id} value={exam.id}>
-                              {exam.name}
-                            </option>
-                          ))}
-                        </select>
+                          Remove
+                        </button>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Schedule Date *
-                        </label>
-                        <input
-                          type="date"
-                          value={formatDateForInput(procedure.scheduleDate)}
-                          onChange={(e) => {
-                            const inputDate = e.target.value;
-                            if (inputDate) {
-                              // Convert YYYY-MM-DD to MM/DD/YYYY for internal storage
-                              const [year, month, day] = inputDate.split('-');
-                              const formattedDate = `${month}/${day}/${year}`;
-                              updateProcedure(index, 'scheduleDate', formattedDate);
-                            } else {
-                              updateProcedure(index, 'scheduleDate', '');
-                            }
-                          }}
-                          min="2000-01-01"
-                          max="2100-12-31"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                          required
-                        />
-                      </div>
+                      <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Exam *
+                          </label>
+                          <select
+                            id={`procedures.${index}.examId`}
+                            name={`procedures.${index}.examId`}
+                            value={procedure.examId}
+                            onChange={(e) => updateProcedure(index, 'examId', e.target.value)}
+                            required
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          >
+                            <option value="">Select Exam</option>
+                            {exams.map((exam) => (
+                              <option key={exam.id} value={exam.id}>
+                                {exam.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Schedule Time *
-                        </label>
-                        <input
-                          type="time"
-                          value={formatTimeForDisplay(procedure.scheduleTime)}
-                          onChange={(e) => {
-                            const newTime = e.target.value;
-                            if (validateTime(newTime)) {
-                              updateProcedure(index, 'scheduleTime', formatTimeForSubmission(newTime));
-                            }
-                          }}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                          required
-                          step="60"
-                        />
-                      </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Schedule Date *
+                          </label>
+                          <input
+                            type="text"
+                            id={`procedures.${index}.scheduleDate`}
+                            name={`procedures.${index}.scheduleDate`}
+                            value={procedure.scheduleDate}
+                            onChange={(e) => updateProcedure(index, 'scheduleDate', e.target.value)}
+                            required
+                            placeholder="MM/DD/YYYY"
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Facility *
-                        </label>
-                        <select
-                          id={`procedures.${index}.facilityId`}
-                          name={`procedures.${index}.facilityId`}
-                          value={procedure.facilityId}
-                          onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                          <option value="">Select Facility</option>
-                          {facilities.map((facility) => (
-                            <option key={facility.id} value={facility.id}>
-                              {facility.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Schedule Time *
+                          </label>
+                          <input
+                            type="time"
+                            id={`procedures.${index}.scheduleTime`}
+                            name={`procedures.${index}.scheduleTime`}
+                            value={procedure.scheduleTime}
+                            onChange={(e) => updateProcedure(index, 'scheduleTime', e.target.value)}
+                            required
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Physician *
-                        </label>
-                        <select
-                          id={`procedures.${index}.physicianId`}
-                          name={`procedures.${index}.physicianId`}
-                          value={procedure.physicianId}
-                          onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                          <option value="">Select Physician</option>
-                          {physicians.map((physician) => (
-                            <option key={physician.id} value={physician.id}>
-                              {physician.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Facility *
+                          </label>
+                          <select
+                            id={`procedures.${index}.facilityId`}
+                            name={`procedures.${index}.facilityId`}
+                            value={procedure.facilityId}
+                            onChange={(e) => updateProcedure(index, 'facilityId', e.target.value)}
+                            required
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          >
+                            <option value="">Select Facility</option>
+                            {facilities.map((facility) => (
+                              <option key={facility.id} value={facility.id}>
+                                {facility.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Status *
-                        </label>
-                        <select
-                          id={`procedures.${index}.statusId`}
-                          name={`procedures.${index}.statusId`}
-                          value={procedure.statusId}
-                          onChange={(e) => updateProcedure(index, 'statusId', e.target.value)}
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                        >
-                          <option value="">Select Status</option>
-                          {statuses.map((status) => (
-                            <option key={status.id} value={status.id}>
-                              {status.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Physician *
+                          </label>
+                          <select
+                            id={`procedures.${index}.physicianId`}
+                            name={`procedures.${index}.physicianId`}
+                            value={procedure.physicianId}
+                            onChange={(e) => updateProcedure(index, 'physicianId', e.target.value)}
+                            required
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          >
+                            <option value="">Select Physician</option>
+                            {physicians.map((physician) => (
+                              <option key={physician.id} value={physician.id}>
+                                {physician.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={procedure.isCompleted}
-                          onChange={(e) => updateProcedure(index, 'isCompleted', e.target.checked)}
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <label className="ml-2 block text-sm text-gray-900">
-                          Completed
-                        </label>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Status *
+                          </label>
+                          <select
+                            id={`procedures.${index}.statusId`}
+                            name={`procedures.${index}.statusId`}
+                            value={procedure.statusId}
+                            onChange={(e) => updateProcedure(index, 'statusId', e.target.value)}
+                            required
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          >
+                            <option value="">Select Status</option>
+                            {statuses.map((status) => (
+                              <option key={status.id} value={status.id}>
+                                {status.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={procedure.isCompleted}
+                              onChange={(e) => updateProcedure(index, 'isCompleted', e.target.checked)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <label className="ml-2 block text-sm text-gray-900">
+                              Completed
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end gap-4">
                 <button
                   type="button"
                   onClick={() => router.push('/patients')}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -1280,5 +1308,5 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
     </div>
-  )
+  );
 } 

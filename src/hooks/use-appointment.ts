@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useApi } from './use-api'
 import { Appointment } from '@/types/appointment'
 
@@ -16,44 +17,156 @@ interface AppointmentsResponse {
 }
 
 export function useAppointment() {
-  const { loading, callApi } = useApi<Appointment>({
-    successMessage: 'Appointment operation completed successfully',
-    errorMessage: 'Failed to complete appointment operation',
-  })
+  const [loading, setLoading] = useState(false)
 
-  const createAppointment = async (data: Omit<Appointment, 'id'>) => {
-    return callApi('/api/appointments', 'POST', data, {
-      successMessage: 'Appointment scheduled successfully',
-      errorMessage: 'Failed to schedule appointment',
-    })
-  }
-
-  const updateAppointment = async (id: string, data: Partial<Appointment>) => {
-    return callApi(`/api/appointments/${id}`, 'PUT', data, {
-      successMessage: 'Appointment updated successfully',
-      errorMessage: 'Failed to update appointment',
-    })
-  }
-
-  const deleteAppointment = async (id: string) => {
-    return callApi(`/api/appointments/${id}`, 'DELETE', undefined, {
-      successMessage: 'Appointment cancelled successfully',
-      errorMessage: 'Failed to cancel appointment',
-    })
+  const getAppointments = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/appointments')
+      const data = await response.json()
+      
+      console.log('API Response:', data)
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch appointments')
+      }
+      
+      return {
+        success: true,
+        data: data,
+        status: response.status
+      }
+    } catch (error) {
+      console.error('Error in getAppointments:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch appointments',
+        status: 500
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getAppointment = async (id: string) => {
-    return callApi<Appointment>(`/api/appointments/${id}`, 'GET', undefined, {
-      successMessage: 'Appointment fetched successfully',
-      errorMessage: 'Failed to fetch appointment',
-    })
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/appointments/${id}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch appointment')
+      }
+      
+      return {
+        success: true,
+        data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch appointment',
+        status: 500
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const getAppointments = async () => {
-    return callApi<Appointment[]>('/api/appointments', 'GET', undefined, {
-      successMessage: 'Appointments fetched successfully',
-      errorMessage: 'Failed to fetch appointments',
-    })
+  const createAppointment = async (appointment: Omit<Appointment, 'id'>) => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointment),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create appointment')
+      }
+      
+      return {
+        success: true,
+        data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create appointment',
+        status: 500
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateAppointment = async (id: string, appointment: Partial<Appointment>) => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointment),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update appointment')
+      }
+      
+      return {
+        success: true,
+        data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update appointment',
+        status: 500
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteAppointment = async (id: string) => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'DELETE',
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete appointment')
+      }
+      
+      return {
+        success: true,
+        data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete appointment',
+        status: 500
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getAppointmentsByDate = async (date: string) => {
@@ -65,11 +178,11 @@ export function useAppointment() {
 
   return {
     loading,
+    getAppointments,
+    getAppointment,
     createAppointment,
     updateAppointment,
     deleteAppointment,
-    getAppointment,
-    getAppointments,
     getAppointmentsByDate,
   }
 } 

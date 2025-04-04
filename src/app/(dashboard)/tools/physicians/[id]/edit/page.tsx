@@ -3,17 +3,9 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPhoneNumber } from '@/utils/formatters'
-
-interface Physician {
-  id: string
-  prefix: string
-  name: string
-  suffix: string | null
-  phoneNumber: string
-  email: string
-  npiNumber: string | null
-  isActive: boolean
-}
+import { Physician } from '@/types'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Loader2, Trash2, ArrowLeft } from 'lucide-react'
 
 interface FormData {
   prefix: string
@@ -59,7 +51,6 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
         throw new Error('Physician not found')
       }
 
-      // Ensure all form values are strings or booleans, never undefined
       setFormData({
         prefix: physician.prefix || '',
         name: physician.name || '',
@@ -109,17 +100,42 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
     setIsLoading(true)
     setError(null)
 
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError('Name is required')
+      setIsLoading(false)
+      return
+    }
+
+    if (!formData.email.trim()) {
+      setError('Email is required')
+      setIsLoading(false)
+      return
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setError('Invalid email format')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch(`/api/physicians/${resolvedParams.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: resolvedParams.id,
+          ...formData
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update physician')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update physician')
       }
 
       router.push('/tools/physicians')
@@ -141,7 +157,8 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete physician')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete physician')
       }
 
       router.push('/tools/physicians')
@@ -151,157 +168,248 @@ export default function EditPhysicianPage({ params }: { params: Promise<{ id: st
   }
 
   if (isLoading) {
-    return <div className="p-4">Loading...</div>
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100"
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-16 w-16 text-indigo-600"
+        >
+          <Loader2 className="h-full w-full" />
+        </motion.div>
+      </motion.div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Edit Physician</h1>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12"
+    >
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden"
+        >
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="px-8 py-6 bg-gradient-to-r from-indigo-600 to-indigo-700"
           >
-            Delete Physician
-          </button>
-        </div>
+            <div className="flex justify-between items-center">
+              <motion.h1 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="text-2xl font-bold text-white"
+              >
+                Edit Physician
+              </motion.h1>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={handleDelete}
+                className="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Physician
+              </motion.button>
+            </div>
+          </motion.div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+          <div className="px-8 py-8">
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg"
+                >
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="prefix" className="block text-sm font-medium text-gray-700">
-              Prefix *
-            </label>
-            <select
-              id="prefix"
-              name="prefix"
-              required
-              value={formData.prefix}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="">Select Prefix</option>
-              <option value="Dr.">Dr.</option>
-              <option value="Dr">Dr</option>
-              <option value="PA">PA</option>
-              <option value="NP">NP</option>
-            </select>
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <div className="space-y-2">
+                  <label htmlFor="prefix" className="block text-sm font-semibold text-gray-700">
+                    Prefix
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.02 }}
+                    type="text"
+                    id="prefix"
+                    name="prefix"
+                    value={formData.prefix}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                    placeholder="Dr., Mr., etc."
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
+                    Name *
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.02 }}
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                    placeholder="Enter full name"
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="suffix" className="block text-sm font-medium text-gray-700">
-              Suffix
-            </label>
-            <input
-              type="text"
-              id="suffix"
-              name="suffix"
-              value={formData.suffix}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="NP, FNP, etc."
-            />
-          </div>
+                <div className="space-y-2">
+                  <label htmlFor="suffix" className="block text-sm font-semibold text-gray-700">
+                    Suffix
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.02 }}
+                    type="text"
+                    id="suffix"
+                    name="suffix"
+                    value={formData.suffix}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                    placeholder="NP, FNP, etc."
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
-              Phone Number * (XXX) XXX-XXXX
-            </label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              required
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="(555) 555-5555"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+                <div className="space-y-2">
+                  <label htmlFor="phoneNumber" className="block text-sm font-semibold text-gray-700">
+                    Phone Number * (XXX) XXX-XXXX
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.02 }}
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    required
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="(555) 555-5555"
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+                    Email *
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.02 }}
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                    placeholder="Enter email address"
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="npiNumber" className="block text-sm font-medium text-gray-700">
-              NPI Number
-            </label>
-            <input
-              type="text"
-              id="npiNumber"
-              name="npiNumber"
-              value={formData.npiNumber}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+                <div className="space-y-2">
+                  <label htmlFor="npiNumber" className="block text-sm font-semibold text-gray-700">
+                    NPI Number
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.02 }}
+                    type="text"
+                    id="npiNumber"
+                    name="npiNumber"
+                    value={formData.npiNumber}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-all duration-200"
+                    placeholder="Enter NPI number"
+                  />
+                </div>
+              </motion.div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleChange}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-              Active
-            </label>
-          </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg"
+              >
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-colors duration-200"
+                />
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                  Active
+                </label>
+              </motion.div>
 
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => router.push('/tools/physicians')}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {isLoading ? 'Updating...' : 'Update Physician'}
-            </button>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex justify-end space-x-4 pt-6 border-t border-gray-200"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => router.push('/tools/physicians')}
+                  className="inline-flex items-center px-6 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:shadow-md"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="submit"
+                  disabled={isLoading}
+                  className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 hover:shadow-md"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Physician'
+                  )}
+                </motion.button>
+              </motion.div>
+            </form>
           </div>
-        </form>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 } 

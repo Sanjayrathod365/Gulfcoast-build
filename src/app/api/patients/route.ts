@@ -13,7 +13,15 @@ export async function GET() {
 
     const patients = await prisma.patient.findMany({
       include: {
-        status: true,
+        appointments: {
+          include: {
+            doctor: true,
+            exam: true,
+          },
+          orderBy: {
+            date: 'asc'
+          }
+        },
         procedures: {
           include: {
             exam: true,
@@ -24,7 +32,9 @@ export async function GET() {
           orderBy: {
             scheduleDate: 'desc'
           }
-        }
+        },
+        status: true,
+        payer: true
       },
       orderBy: [
         { lastName: 'asc' },
@@ -32,7 +42,15 @@ export async function GET() {
       ]
     })
 
-    return NextResponse.json(patients)
+    // Transform the response to include full name
+    const transformedPatients = patients.map(patient => ({
+      ...patient,
+      name: `${patient.firstName} ${patient.lastName}`,
+    }))
+
+    console.log('Fetched patients with appointments:', transformedPatients)
+
+    return NextResponse.json(transformedPatients)
   } catch (error) {
     console.error('[PATIENTS_GET]', error)
     return NextResponse.json(

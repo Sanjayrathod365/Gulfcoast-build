@@ -550,311 +550,346 @@ export default function CalendarPage() {
 
   if (initialLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">{error}</div>
+  return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg max-w-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      {refreshing && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-        </div>
-      )}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Select value={selectedFacility} onValueChange={setSelectedFacility}>
-            <SelectTrigger className="w-[200px] bg-white dark:bg-gray-800">
-              <SelectValue 
-                className="text-gray-900 dark:text-gray-100" 
-                placeholder="Select Facility" 
-              />
-            </SelectTrigger>
-            <SelectContent 
-              className="w-[200px] p-0 bg-white dark:bg-gray-800"
-              position="popper"
-              sideOffset={5}
-            >
-              <div className="py-2">
-                <div 
-                  className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSelectedFacility('all');
-                  }}
-                >
-                  <div className="flex items-center flex-1 space-x-3">
-                    <div className={`
-                      w-4 h-4 border-2 rounded flex items-center justify-center
-                      ${selectedFacility === 'all'
-                        ? 'bg-primary border-primary'
-                        : 'border-gray-400 dark:border-gray-500'}
-                    `}>
-                      {selectedFacility === 'all' && (
-                        <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      All Facilities
-                    </span>
-                  </div>
-                </div>
-                <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
-                {facilities.map((facility) => (
-                  <div
-                    key={facility.id}
-                    className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedFacility(facility.id);
-                    }}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-8 py-6 bg-gradient-to-r from-indigo-600 to-indigo-700">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center gap-4">
+                <Select value={selectedFacility} onValueChange={setSelectedFacility}>
+                  <SelectTrigger className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20">
+                    <SelectValue 
+                      className="text-white" 
+                      placeholder="Select Facility" 
+                    />
+                  </SelectTrigger>
+                  <SelectContent 
+                    className="w-[200px] p-0 bg-white dark:bg-gray-800"
+                    position="popper"
+                    sideOffset={5}
                   >
-                    <div className="flex items-center flex-1 space-x-3">
-                      <div className={`
-                        w-4 h-4 border-2 rounded flex items-center justify-center
-                        ${selectedFacility === facility.id
-                          ? 'bg-primary border-primary'
-                          : 'border-gray-400 dark:border-gray-500'}
-                      `}>
-                        {selectedFacility === facility.id && (
-                          <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                        )}
+                    <div className="py-2">
+                      <div 
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedFacility('all');
+                        }}
+                      >
+                        <div className="flex items-center flex-1 space-x-3">
+                          <div className={`
+                            w-4 h-4 border-2 rounded flex items-center justify-center
+                            ${selectedFacility === 'all'
+                              ? 'bg-indigo-600 border-indigo-600'
+                              : 'border-gray-400 dark:border-gray-500'}
+                          `}>
+                            {selectedFacility === 'all' && (
+                              <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            All Facilities
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {facility.name}
-                      </span>
+                      <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+                      {facilities.map((facility) => (
+                        <div
+                          key={facility.id}
+                          className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedFacility(facility.id);
+                          }}
+                        >
+                          <div className="flex items-center flex-1 space-x-3">
+                            <div className={`
+                              w-4 h-4 border-2 rounded flex items-center justify-center
+                              ${selectedFacility === facility.id
+                                ? 'bg-indigo-600 border-indigo-600'
+                                : 'border-gray-400 dark:border-gray-500'}
+                            `}>
+                              {selectedFacility === facility.id && (
+                                <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                              )}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {facility.name}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </SelectContent>
-          </Select>
+                  </SelectContent>
+                </Select>
 
-          <Select
-            value="physicians"
-            onValueChange={() => {}}
-          >
-            <SelectTrigger className="w-[200px] bg-white dark:bg-gray-800">
-              <SelectValue 
-                className="text-gray-900 dark:text-gray-100"
-                placeholder={
-                  selectedPhysicians.length === 0
-                    ? "Select Physicians"
-                    : `${selectedPhysicians.length} selected`
-                } 
-              />
-            </SelectTrigger>
-            <SelectContent className="w-[200px] p-0 bg-white dark:bg-gray-800">
-              <div className="py-2">
-                <div 
-                  className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (selectedPhysicians.length === physicians.length) {
-                      setSelectedPhysicians([]);
-                    } else {
-                      setSelectedPhysicians(physicians.map(p => p.id));
-                    }
-                  }}
+                <Select
+                  value="physicians"
+                  onValueChange={() => {}}
                 >
-                  <div className="flex items-center flex-1 space-x-3">
-                    <div className={`
-                      w-4 h-4 border-2 rounded flex items-center justify-center
-                      ${selectedPhysicians.length === physicians.length
-                        ? 'bg-primary border-primary'
-                        : 'border-gray-400 dark:border-gray-500'}
-                    `}>
-                      {selectedPhysicians.length === physicians.length && (
-                        <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Select All
-                    </span>
-                  </div>
-                </div>
-                <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
-                {physicians.map((physician) => (
-                  <div
-                    key={physician.id}
-                    className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedPhysicians(prev =>
-                        prev.includes(physician.id)
-                          ? prev.filter(id => id !== physician.id)
-                          : [...prev, physician.id]
-                      );
-                    }}
-                  >
-                    <div className="flex items-center flex-1 space-x-3">
-                      <div className={`
-                        w-4 h-4 border-2 rounded flex items-center justify-center
-                        ${selectedPhysicians.includes(physician.id)
-                          ? 'bg-primary border-primary'
-                          : 'border-gray-400 dark:border-gray-500'}
-                      `}>
-                        {selectedPhysicians.includes(physician.id) && (
-                          <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                        )}
+                  <SelectTrigger className="w-[200px] bg-white/10 text-white border-white/20 hover:bg-white/20">
+                    <SelectValue 
+                      className="text-white"
+                      placeholder={
+                        selectedPhysicians.length === 0
+                          ? "Select Physicians"
+                          : `${selectedPhysicians.length} selected`
+                      } 
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="w-[200px] p-0 bg-white dark:bg-gray-800">
+                    <div className="py-2">
+                      <div 
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (selectedPhysicians.length === physicians.length) {
+                            setSelectedPhysicians([]);
+                          } else {
+                            setSelectedPhysicians(physicians.map(p => p.id));
+                          }
+                        }}
+                      >
+                        <div className="flex items-center flex-1 space-x-3">
+                          <div className={`
+                            w-4 h-4 border-2 rounded flex items-center justify-center
+                            ${selectedPhysicians.length === physicians.length
+                              ? 'bg-indigo-600 border-indigo-600'
+                              : 'border-gray-400 dark:border-gray-500'}
+                          `}>
+                            {selectedPhysicians.length === physicians.length && (
+                              <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Select All
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {physician.name}
-                      </span>
+                      <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+                      {physicians.map((physician) => (
+                        <div
+                          key={physician.id}
+                          className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedPhysicians(prev =>
+                              prev.includes(physician.id)
+                                ? prev.filter(id => id !== physician.id)
+                                : [...prev, physician.id]
+                            );
+                          }}
+                        >
+                          <div className="flex items-center flex-1 space-x-3">
+                            <div className={`
+                              w-4 h-4 border-2 rounded flex items-center justify-center
+                              ${selectedPhysicians.includes(physician.id)
+                                ? 'bg-indigo-600 border-indigo-600'
+                                : 'border-gray-400 dark:border-gray-500'}
+                            `}>
+                              {selectedPhysicians.includes(physician.id) && (
+                                <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                              )}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {physician.name}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </SelectContent>
-          </Select>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex rounded-md shadow-sm">
-            <button
-              onClick={() => setView('month')}
-              className={`px-4 py-2 text-sm font-medium border ${
-                view === 'month' ? 'bg-primary text-white' : 'bg-white text-gray-700'
-              } border-gray-300 rounded-l-md hover:bg-gray-50`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => setView('week')}
-              className={`px-4 py-2 text-sm font-medium border-t border-b ${
-                view === 'week' ? 'bg-primary text-white' : 'bg-white text-gray-700'
-              } border-gray-300 hover:bg-gray-50`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setView('day')}
-              className={`px-4 py-2 text-sm font-medium border ${
-                view === 'day' ? 'bg-primary text-white' : 'bg-white text-gray-700'
-              } border-gray-300 rounded-r-md hover:bg-gray-50`}
-            >
-              Day
-            </button>
+              <div className="flex items-center gap-4">
+                <div className="flex rounded-lg shadow-sm bg-white/10 p-1">
+                  <button
+                    onClick={() => setView('month')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      view === 'month' 
+                        ? 'bg-white text-indigo-600 shadow' 
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Month
+                  </button>
+                  <button
+                    onClick={() => setView('week')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      view === 'week' 
+                        ? 'bg-white text-indigo-600 shadow' 
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Week
+                  </button>
+                  <button
+                    onClick={() => setView('day')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      view === 'day' 
+                        ? 'bg-white text-indigo-600 shadow' 
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Day
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 bg-white/10 rounded-lg px-2 py-1">
+                  <button
+                    onClick={() => navigate('prev')}
+                    className="p-2 text-white hover:bg-white/10 rounded-md transition-colors"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <span className="text-white font-medium px-2">
+                    {format(currentDate, 'MMMM d, yyyy')}
+                  </span>
+                  <button
+                    onClick={() => navigate('next')}
+                    className="p-2 text-white hover:bg-white/10 rounded-md transition-colors"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('prev')}
-              className="p-2 hover:bg-gray-100 rounded-full"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <span className="text-lg font-semibold">
-              {format(currentDate, 'MMMM d, yyyy')}
-            </span>
-            <button
-              onClick={() => navigate('next')}
-              className="p-2 hover:bg-gray-100 rounded-full"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
+          <div className="px-8 py-6">
+            {refreshing && (
+              <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg p-4 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                <span className="text-sm text-gray-600">Refreshing...</span>
+              </div>
+            )}
+
+            {view === 'day' && (
+              <div className="border dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                <div className="grid grid-cols-[100px_1fr] divide-x divide-gray-200 dark:divide-gray-700">
+                  <div className="font-semibold p-4 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+                    Time
+                  </div>
+                  <div className="font-semibold p-4 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+                    {format(currentDate, 'EEEE, MMMM d')}
+                  </div>
+                </div>
+                {timeSlots.map((timeSlot) => {
+                  const slotProcedures = getProceduresForTimeSlot(currentDate, timeSlot);
+
+                  return (
+                    <div 
+                      key={timeSlot.toISOString()} 
+                      className="grid grid-cols-[100px_1fr] divide-x divide-gray-200 dark:divide-gray-700 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                      onClick={() => handleScheduleClick(timeSlot)}
+                    >
+                      <div className="p-4 text-gray-500 dark:text-gray-400">
+                        {format(timeSlot, 'h:mm a')}
+                      </div>
+                      <div className="p-4 min-h-[100px] space-y-2">
+                        {slotProcedures.map((procedure) => (
+                          <ProcedureCard key={procedure.id} procedure={procedure} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {view === 'week' && (
+              <div className="grid grid-cols-7 gap-4">
+                {weekDays.map((day) => (
+                  <div
+                    key={day.toISOString()}
+                    className={`border rounded-lg p-4 shadow-sm transition-colors ${
+                      isSameDay(day, new Date()) 
+                        ? 'bg-indigo-50 border-indigo-200' 
+                        : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-center mb-4">
+                      <div className="text-sm text-gray-500">
+                        {format(day, 'EEE')}
+                      </div>
+                      <div className={`text-lg font-semibold ${
+                        isSameDay(day, new Date()) ? 'text-indigo-600' : 'text-gray-900'
+                      }`}>
+                        {format(day, 'd')}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {getProceduresForTimeSlot(day, new Date()).map((procedure) => (
+                        <div
+                          key={procedure.id}
+                          className="bg-white p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="font-medium text-gray-900">
+                            {formatTime(procedure.scheduleTime)}
+                          </div>
+                          <div className="text-gray-600">
+                            {procedure.patient.firstName} {procedure.patient.lastName}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            {procedure.exam.name}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            {procedure.facility.name}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            Dr. {procedure.physician.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {view === 'month' && (
+              <div className="grid grid-cols-7 gap-4">
+                {/* Month view implementation will go here */}
+                <div className="col-span-7 text-center text-gray-500 bg-white rounded-lg p-8 shadow-sm">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Month view coming soon</h3>
+                  <p className="mt-1 text-sm text-gray-500">We're working on implementing the month view.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {view === 'day' && (
-        <div className="border dark:border-gray-700 rounded-lg">
-          <div className="grid grid-cols-[100px_1fr] divide-x divide-gray-200 dark:divide-gray-700">
-            <div className="font-semibold p-4 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
-              Time
-            </div>
-            <div className="font-semibold p-4 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
-              {format(currentDate, 'EEEE, MMMM d')}
-            </div>
-          </div>
-          {timeSlots.map((timeSlot) => {
-            const slotProcedures = getProceduresForTimeSlot(currentDate, timeSlot);
-
-            return (
-              <div 
-                key={timeSlot.toISOString()} 
-                className="grid grid-cols-[100px_1fr] divide-x divide-gray-200 dark:divide-gray-700 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                onClick={() => handleScheduleClick(timeSlot)}
-              >
-                <div className="p-4 text-gray-500 dark:text-gray-400">
-                  {format(timeSlot, 'h:mm a')}
-                </div>
-                <div className="p-4 min-h-[100px] space-y-2">
-                  {slotProcedures.map((procedure) => (
-                    <ProcedureCard key={procedure.id} procedure={procedure} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {view === 'week' && (
-        <div className="grid grid-cols-7 gap-4">
-          {weekDays.map((day) => (
-            <div
-              key={day.toISOString()}
-              className={`border rounded-lg p-4 ${
-                isSameDay(day, new Date()) ? 'bg-blue-50' : ''
-              }`}
-            >
-              <div className="text-center mb-4">
-                <div className="text-sm text-gray-500">
-                  {format(day, 'EEE')}
-                </div>
-                <div className="text-lg font-semibold">
-                  {format(day, 'd')}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {getProceduresForTimeSlot(day, new Date()).map((procedure) => (
-                  <div
-                    key={procedure.id}
-                    className="bg-white p-2 rounded border text-sm"
-                  >
-                    <div className="font-medium">
-                      {formatTime(procedure.scheduleTime)}
-                    </div>
-                    <div className="text-gray-600">
-                      {procedure.patient.firstName} {procedure.patient.lastName}
-                    </div>
-                    <div className="text-gray-500 text-xs">
-                      {procedure.exam.name}
-                    </div>
-                    <div className="text-gray-500 text-xs">
-                      {procedure.facility.name}
-                    </div>
-                    <div className="text-gray-500 text-xs">
-                      Dr. {procedure.physician.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {view === 'month' && (
-        <div className="grid grid-cols-7 gap-4">
-          {/* Month view implementation will go here */}
-          <div className="col-span-7 text-center text-gray-500">
-            Month view coming soon...
-          </div>
-        </div>
-      )}
 
       <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -865,19 +900,15 @@ export default function CalendarPage() {
             <div className="space-y-2">
               <Label htmlFor="patientId">Patient</Label>
               <Select name="patientId">
-                <SelectTrigger className="w-full bg-white dark:bg-gray-800">
-                  <SelectValue className="text-gray-900 dark:text-gray-100" placeholder="Select Patient" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Patient" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="max-h-[200px] overflow-y-auto bg-white dark:bg-gray-800 z-50"
-                  position="popper"
-                  sideOffset={5}
-                >
+                <SelectContent>
                   {patients.map((patient) => (
                     <SelectItem 
                       key={patient.id} 
                       value={patient.id}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="cursor-pointer"
                     >
                       {patient.firstName} {patient.lastName}
                     </SelectItem>
@@ -889,19 +920,15 @@ export default function CalendarPage() {
             <div className="space-y-2">
               <Label htmlFor="examId">Exam</Label>
               <Select name="examId">
-                <SelectTrigger className="w-full bg-white dark:bg-gray-800">
-                  <SelectValue className="text-gray-900 dark:text-gray-100" placeholder="Select Exam" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Exam" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="max-h-[200px] overflow-y-auto bg-white dark:bg-gray-800 z-50"
-                  position="popper"
-                  sideOffset={5}
-                >
+                <SelectContent>
                   {exams.map((exam) => (
                     <SelectItem 
                       key={exam.id} 
                       value={exam.id}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="cursor-pointer"
                     >
                       {exam.name}
                     </SelectItem>
@@ -913,19 +940,15 @@ export default function CalendarPage() {
             <div className="space-y-2">
               <Label htmlFor="facilityId">Facility</Label>
               <Select name="facilityId">
-                <SelectTrigger className="w-full bg-white dark:bg-gray-800">
-                  <SelectValue className="text-gray-900 dark:text-gray-100" placeholder="Select Facility" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Facility" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="max-h-[200px] overflow-y-auto bg-white dark:bg-gray-800 z-50"
-                  position="popper"
-                  sideOffset={5}
-                >
+                <SelectContent>
                   {facilities.map((facility) => (
                     <SelectItem 
                       key={facility.id} 
                       value={facility.id}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="cursor-pointer"
                     >
                       {facility.name}
                     </SelectItem>
@@ -937,19 +960,15 @@ export default function CalendarPage() {
             <div className="space-y-2">
               <Label htmlFor="physicianId">Physician</Label>
               <Select name="physicianId">
-                <SelectTrigger className="w-full bg-white dark:bg-gray-800">
-                  <SelectValue className="text-gray-900 dark:text-gray-100" placeholder="Select Physician" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Physician" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="max-h-[200px] overflow-y-auto bg-white dark:bg-gray-800 z-50"
-                  position="popper"
-                  sideOffset={5}
-                >
+                <SelectContent>
                   {physicians.map((physician) => (
                     <SelectItem 
                       key={physician.id} 
                       value={physician.id}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="cursor-pointer"
                     >
                       {physician.name}
                     </SelectItem>
@@ -965,7 +984,7 @@ export default function CalendarPage() {
                 id="scheduleDate"
                 name="scheduleDate"
                 defaultValue={selectedTimeSlot ? format(selectedTimeSlot, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
-                className="w-full bg-white dark:bg-gray-800"
+                className="w-full"
                 required
               />
             </div>
@@ -980,7 +999,7 @@ export default function CalendarPage() {
                 min="07:20"
                 max="23:20"
                 step="1200"
-                className="w-full bg-white dark:bg-gray-800"
+                className="w-full"
                 required
               />
             </div>
@@ -1000,20 +1019,24 @@ export default function CalendarPage() {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Procedure</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="patientId">Patient</Label>
               <Select name="patientId" defaultValue={editingProcedure?.patient?.id}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Patient" />
                 </SelectTrigger>
                 <SelectContent>
                   {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
+                    <SelectItem 
+                      key={patient.id} 
+                      value={patient.id}
+                      className="cursor-pointer"
+                    >
                       {patient.firstName} {patient.lastName}
                     </SelectItem>
                   ))}
@@ -1021,15 +1044,19 @@ export default function CalendarPage() {
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="examId">Exam</Label>
               <Select name="examId" defaultValue={editingProcedure?.exam?.id}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Exam" />
                 </SelectTrigger>
                 <SelectContent>
                   {exams.map((exam) => (
-                    <SelectItem key={exam.id} value={exam.id}>
+                    <SelectItem 
+                      key={exam.id} 
+                      value={exam.id}
+                      className="cursor-pointer"
+                    >
                       {exam.name}
                     </SelectItem>
                   ))}
@@ -1037,15 +1064,19 @@ export default function CalendarPage() {
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="facilityId">Facility</Label>
               <Select name="facilityId" defaultValue={editingProcedure?.facility?.id}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Facility" />
                 </SelectTrigger>
                 <SelectContent>
                   {facilities.map((facility) => (
-                    <SelectItem key={facility.id} value={facility.id}>
+                    <SelectItem 
+                      key={facility.id} 
+                      value={facility.id}
+                      className="cursor-pointer"
+                    >
                       {facility.name}
                     </SelectItem>
                   ))}
@@ -1053,15 +1084,19 @@ export default function CalendarPage() {
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="physicianId">Physician</Label>
               <Select name="physicianId" defaultValue={editingProcedure?.physician?.id}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Physician" />
                 </SelectTrigger>
                 <SelectContent>
                   {physicians.map((physician) => (
-                    <SelectItem key={physician.id} value={physician.id}>
+                    <SelectItem 
+                      key={physician.id} 
+                      value={physician.id}
+                      className="cursor-pointer"
+                    >
                       {physician.name}
                     </SelectItem>
                   ))}

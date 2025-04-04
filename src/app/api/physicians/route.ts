@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Physician } from '@/types'
 
 export async function GET() {
   try {
@@ -46,20 +47,49 @@ export async function POST(request: Request) {
 
     const data = await request.json()
 
+    // Validate required fields
+    if (!data.name || !data.email) {
+      return NextResponse.json(
+        { error: 'Name and email are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(data.email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
+
+    // Check if email already exists
+    const existingPhysician = await prisma.physician.findUnique({
+      where: { email: data.email }
+    })
+
+    if (existingPhysician) {
+      return NextResponse.json(
+        { error: 'Email already exists' },
+        { status: 400 }
+      )
+    }
+
     const physician = await prisma.physician.create({
       data: {
         prefix: data.prefix || null,
-        name: data.name,
+        name: data.name.trim(),
         suffix: data.suffix || null,
         phoneNumber: data.phoneNumber || null,
         faxNumber: data.faxNumber || null,
-        email: data.email,
+        email: data.email.trim(),
         npiNumber: data.npiNumber || null,
         clinicName: data.clinicName || null,
         address: data.address || null,
         mapLink: data.mapLink || null,
         status: data.status || 'Active',
-        isActive: true
+        isActive: data.isActive === false ? false : true
       }
     })
 
@@ -91,21 +121,47 @@ export async function PUT(request: Request) {
       )
     }
 
+    // Validate email if provided
+    if (updateData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(updateData.email)) {
+        return NextResponse.json(
+          { error: 'Invalid email format' },
+          { status: 400 }
+        )
+      }
+
+      // Check if email already exists for other physicians
+      const existingPhysician = await prisma.physician.findFirst({
+        where: {
+          email: updateData.email,
+          NOT: { id }
+        }
+      })
+
+      if (existingPhysician) {
+        return NextResponse.json(
+          { error: 'Email already exists' },
+          { status: 400 }
+        )
+      }
+    }
+
     const physician = await prisma.physician.update({
       where: { id },
       data: {
         prefix: updateData.prefix || null,
-        name: updateData.name,
+        name: updateData.name.trim(),
         suffix: updateData.suffix || null,
         phoneNumber: updateData.phoneNumber || null,
         faxNumber: updateData.faxNumber || null,
-        email: updateData.email,
+        email: updateData.email?.trim(),
         npiNumber: updateData.npiNumber || null,
         clinicName: updateData.clinicName || null,
         address: updateData.address || null,
         mapLink: updateData.mapLink || null,
         status: updateData.status || 'Active',
-        isActive: updateData.isActive
+        isActive: updateData.isActive === false ? false : true
       }
     })
 
@@ -133,6 +189,18 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json(
         { error: 'Physician ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Check if physician has any associated procedures
+    const proceduresCount = await prisma.procedure.count({
+      where: { physicianId: id }
+    })
+
+    if (proceduresCount > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete physician with associated procedures' },
         { status: 400 }
       )
     }

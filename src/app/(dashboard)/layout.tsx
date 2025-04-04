@@ -49,8 +49,8 @@ export default function DashboardLayout({
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
       </div>
     )
   }
@@ -60,12 +60,12 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm fixed w-full z-50 border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <nav className="bg-white shadow-lg fixed w-full z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/dashboard" className="text-xl font-bold text-gray-900 dark:text-white">
+              <Link href="/dashboard" className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-700 bg-clip-text text-transparent">
                 Gulf Coast Medical
               </Link>
               <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
@@ -75,9 +75,9 @@ export default function DashboardLayout({
                     href={item.href}
                     className={cn(
                       pathname === item.href
-                        ? 'border-indigo-500 text-gray-900 dark:text-white'
-                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white',
-                      'inline-flex items-center h-16 px-3 border-b-2 text-sm font-medium transition-colors'
+                        ? 'text-indigo-600 font-medium'
+                        : 'text-gray-500 hover:text-gray-700',
+                      'inline-flex items-center h-16 px-3 text-sm transition-colors'
                     )}
                   >
                     {item.name}
@@ -85,14 +85,14 @@ export default function DashboardLayout({
                 ))}
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <Menu as="div" className="relative">
                 <Menu.Button 
                   className={cn(
                     pathname.startsWith('/tools')
-                      ? 'border-indigo-500 text-gray-900 dark:text-white'
-                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white',
-                    'inline-flex items-center h-16 px-3 border-b-2 text-sm font-medium transition-colors'
+                      ? 'text-indigo-600 font-medium'
+                      : 'text-gray-500 hover:text-gray-700',
+                    'inline-flex items-center h-16 px-3 text-sm transition-colors'
                   )}
                 >
                   Admin Tools
@@ -107,7 +107,7 @@ export default function DashboardLayout({
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="absolute right-0 top-full z-50 mt-1 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <Menu.Items className="absolute right-0 top-full z-50 mt-1 w-56 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
                       {toolsNavigation.map((item) => (
                         <Menu.Item key={item.name}>
@@ -115,8 +115,8 @@ export default function DashboardLayout({
                             <Link
                               href={item.href}
                               className={cn(
-                                active ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300',
-                                pathname === item.href ? 'bg-gray-100 dark:bg-gray-700' : '',
+                                active ? 'bg-gray-50 text-gray-900' : 'text-gray-700',
+                                pathname === item.href ? 'bg-gray-50' : '',
                                 'block px-4 py-2 text-sm transition-colors'
                               )}
                             >
@@ -133,9 +133,9 @@ export default function DashboardLayout({
                 href="/settings"
                 className={cn(
                   pathname === '/settings'
-                    ? 'border-indigo-500 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white',
-                  'inline-flex items-center h-16 px-3 border-b-2 text-sm font-medium transition-colors'
+                    ? 'text-indigo-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-700',
+                  'inline-flex items-center h-16 px-3 text-sm transition-colors'
                 )}
               >
                 Settings
@@ -144,9 +144,9 @@ export default function DashboardLayout({
                 href="/help"
                 className={cn(
                   pathname === '/help'
-                    ? 'border-indigo-500 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white',
-                  'inline-flex items-center h-16 px-3 border-b-2 text-sm font-medium transition-colors'
+                    ? 'text-indigo-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-700',
+                  'inline-flex items-center h-16 px-3 text-sm transition-colors'
                 )}
               >
                 Help
@@ -154,14 +154,14 @@ export default function DashboardLayout({
               <div className="px-3">
                 <ThemeSwitcher />
               </div>
-              <div className="flex items-center space-x-3 border-l pl-3 border-gray-200 dark:border-gray-700">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+              <div className="flex items-center space-x-3 border-l pl-3 border-gray-200">
+                <span className="text-sm text-gray-700">
                   {session.user?.name || session.user?.email}
                 </span>
                 <Button
                   variant="outline"
                   onClick={() => logout()}
-                  className="text-sm text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
+                  className="text-sm text-gray-700 border-gray-300 hover:bg-gray-50"
                 >
                   Logout
                 </Button>
