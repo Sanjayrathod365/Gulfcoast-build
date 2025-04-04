@@ -17,21 +17,32 @@ export function useAuth() {
         redirect: false,
       })
 
-      if (result?.error) {
+      if (!result) {
         toast({
           title: 'Error',
-          description: result.error,
+          description: 'Authentication failed',
           variant: 'destructive',
         })
         return false
       }
 
-      if (result?.ok) {
-        router.push('/dashboard')
+      if (result.error) {
+        toast({
+          title: 'Error',
+          description: result.error || 'Authentication failed',
+          variant: 'destructive',
+        })
+        return false
       }
-      return result?.ok || false
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
+
+      if (result.ok) {
+        router.push('/dashboard')
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Login error:', error)
       toast({
         title: 'Error',
         description: 'An error occurred during login',
