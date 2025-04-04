@@ -16,6 +16,10 @@ declare module 'next-auth' {
   }
 }
 
+// Fallback secret for development and testing
+// In production, always use the environment variable
+const FALLBACK_SECRET = "this_is_a_fallback_secret_do_not_use_in_production_b54df4b0c8a6c3e1"
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -85,6 +89,6 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || FALLBACK_SECRET,
   debug: process.env.NODE_ENV === 'development',
 } 
