@@ -58,15 +58,15 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [callApi, setCallApi] = useState<typeof fetch>(fetch)
+  const [refreshToggle, setRefreshToggle] = useState(false)
 
   useEffect(() => {
     fetchPatients()
-  }, [callApi])
+  }, [refreshToggle])
 
   const fetchPatients = async () => {
     try {
-      const response = await callApi('/api/patients')
+      const response = await fetch('/api/patients')
       if (!response.ok) {
         throw new Error('Failed to fetch patients')
       }
