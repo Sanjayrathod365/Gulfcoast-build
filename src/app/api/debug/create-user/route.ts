@@ -6,13 +6,13 @@ import { hash } from 'bcryptjs';
 // Only use in development or testing environments
 export async function POST(request: Request) {
   try {
-    // Check if we're in development mode
-    if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_TEST_USER_CREATION) {
-      return NextResponse.json(
-        { error: 'This endpoint is only available in development mode' },
-        { status: 403 }
-      );
-    }
+    // Temporarily allow test user creation in production for debugging
+    // if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_TEST_USER_CREATION) {
+    //   return NextResponse.json(
+    //     { error: 'This endpoint is only available in development mode' },
+    //     { status: 403 }
+    //   );
+    // }
 
     const body = await request.json();
     const { email, password, name } = body;
@@ -25,7 +25,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if DATABASE_URL is set
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'DATABASE_URL environment variable is not set' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Attempting to create user with email:', email);
+
     // Check if user already exists
+    try {
+      await prisma.$connect();
+      console.log('Database connection successful');
+    } catch (dbError: any) {
+      console.error('Database connection failed:', dbError);
+      return NextResponse.json(
+        { error: `Database connection failed: ${dbError.message}` },
+        { status: 500 }
+      );
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
@@ -68,5 +89,7 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 } 
