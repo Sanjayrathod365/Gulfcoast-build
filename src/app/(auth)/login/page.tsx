@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
@@ -30,7 +30,8 @@ const formSchema = z.object({
   password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
 })
 
-export default function LoginPage() {
+// Create a client component that uses useSearchParams
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false)
   const { login, resetPassword } = useAuth()
   const router = useRouter()
@@ -113,5 +114,18 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+// Main page component with Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 } 
